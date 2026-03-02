@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'chat_page.dart';
+import 'calendar_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,7 +13,13 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
   void _onItemTapped(int index) {
-    if (index == 2) {
+    if (index == 1) {
+      // Navigation vers la page Calendrier
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CalendarPage()),
+      );
+    } else if (index == 2) {
       // Navigation vers la page Messages
       Navigator.push(
         context,
