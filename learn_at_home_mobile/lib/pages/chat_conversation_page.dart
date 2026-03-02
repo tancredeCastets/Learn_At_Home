@@ -1,0 +1,555 @@
+import 'package:flutter/material.dart';
+
+class ChatConversationPage extends StatefulWidget {
+  final String contactName;
+  final String contactAvatar;
+  final bool isOnline;
+
+  const ChatConversationPage({
+    super.key,
+    required this.contactName,
+    required this.contactAvatar,
+    required this.isOnline,
+  });
+
+  @override
+  State<ChatConversationPage> createState() => _ChatConversationPageState();
+}
+
+class _ChatConversationPageState extends State<ChatConversationPage> {
+  final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
+  bool _isTyping = false;
+
+  // Messages simulés
+  final List<Map<String, dynamic>> _messages = [
+    {
+      'id': '1',
+      'text': 'Salut ! Comment ça va ?',
+      'isMe': false,
+      'time': '14:00',
+      'status': 'read',
+    },
+    {
+      'id': '2',
+      'text': 'Très bien merci ! Et toi ?',
+      'isMe': true,
+      'time': '14:02',
+      'status': 'read',
+    },
+    {
+      'id': '3',
+      'text': 'Ça va bien ! Tu as réussi à faire l\'exercice de maths ?',
+      'isMe': false,
+      'time': '14:05',
+      'status': 'read',
+    },
+    {
+      'id': '4',
+      'text': 'Oui, j\'ai eu un peu de mal avec la question 3 mais j\'ai fini par comprendre.',
+      'isMe': true,
+      'time': '14:08',
+      'status': 'read',
+    },
+    {
+      'id': '5',
+      'text': 'Super ! Si tu veux, on peut revoir ça ensemble demain.',
+      'isMe': false,
+      'time': '14:10',
+      'status': 'read',
+    },
+    {
+      'id': '6',
+      'text': 'Ce serait génial ! On se retrouve à quelle heure ?',
+      'isMe': true,
+      'time': '14:12',
+      'status': 'read',
+    },
+    {
+      'id': '7',
+      'text': 'D\'accord, on se voit demain pour le cours de maths !',
+      'isMe': false,
+      'time': '14:30',
+      'status': 'read',
+    },
+  ];
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _sendMessage() {
+    if (_messageController.text.trim().isEmpty) return;
+
+    setState(() {
+      _messages.add({
+        'id': DateTime.now().millisecondsSinceEpoch.toString(),
+        'text': _messageController.text.trim(),
+        'isMe': true,
+        'time': _formatTime(DateTime.now()),
+        'status': 'sent',
+      });
+      _messageController.clear();
+    });
+
+    // Scroll to bottom
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+
+    // Simuler une réponse
+    _simulateReply();
+  }
+
+  void _simulateReply() {
+    setState(() => _isTyping = true);
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add({
+            'id': DateTime.now().millisecondsSinceEpoch.toString(),
+            'text': 'D\'accord, c\'est noté ! 👍',
+            'isMe': false,
+            'time': _formatTime(DateTime.now()),
+            'status': 'read',
+          });
+        });
+
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
+    });
+  }
+
+  String _formatTime(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: _buildAppBar(),
+      body: Column(
+        children: [
+          Expanded(child: _buildMessagesList()),
+          if (_isTyping) _buildTypingIndicator(),
+          _buildMessageInput(),
+        ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 1,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF2D3748)),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: Row(
+        children: [
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+                child: Text(
+                  widget.contactAvatar,
+                  style: const TextStyle(
+                    color: Color(0xFF4A90A4),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (widget.isOnline)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.contactName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D3748),
+                  ),
+                ),
+                Text(
+                  widget.isOnline ? 'En ligne' : 'Hors ligne',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: widget.isOnline ? Colors.green : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.videocam_outlined, color: Color(0xFF4A90A4)),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Appel vidéo bientôt disponible')),
+            );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.call_outlined, color: Color(0xFF4A90A4)),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Appel audio bientôt disponible')),
+            );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.more_vert, color: Color(0xFF4A90A4)),
+          onPressed: _showConversationOptions,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMessagesList() {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      itemCount: _messages.length,
+      itemBuilder: (context, index) {
+        final message = _messages[index];
+        final isMe = message['isMe'] as bool;
+        final showAvatar = !isMe &&
+            (index == 0 || _messages[index - 1]['isMe'] == true);
+
+        return _buildMessageBubble(message, showAvatar);
+      },
+    );
+  }
+
+  Widget _buildMessageBubble(Map<String, dynamic> message, bool showAvatar) {
+    final isMe = message['isMe'] as bool;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!isMe && showAvatar)
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+              child: Text(
+                widget.contactAvatar,
+                style: const TextStyle(
+                  color: Color(0xFF4A90A4),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            )
+          else if (!isMe)
+            const SizedBox(width: 32),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: isMe ? const Color(0xFF4A90A4) : Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(18),
+                  topRight: const Radius.circular(18),
+                  bottomLeft: Radius.circular(isMe ? 18 : 4),
+                  bottomRight: Radius.circular(isMe ? 4 : 18),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    message['text'],
+                    style: TextStyle(
+                      color: isMe ? Colors.white : const Color(0xFF2D3748),
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        message['time'],
+                        style: TextStyle(
+                          color: isMe ? Colors.white70 : Colors.grey,
+                          fontSize: 11,
+                        ),
+                      ),
+                      if (isMe) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          message['status'] == 'read'
+                              ? Icons.done_all
+                              : Icons.done,
+                          size: 14,
+                          color: Colors.white70,
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTypingIndicator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      alignment: Alignment.centerLeft,
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 14,
+            backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+            child: Text(
+              widget.contactAvatar,
+              style: const TextStyle(
+                color: Color(0xFF4A90A4),
+                fontWeight: FontWeight.bold,
+                fontSize: 10,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDot(0),
+                _buildDot(1),
+                _buildDot(2),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDot(int index) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 600 + (index * 200)),
+      builder: (context, value, child) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.3 + (value * 0.4)),
+            shape: BoxShape.circle,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMessageInput() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline, color: Color(0xFF4A90A4)),
+              onPressed: _showAttachmentOptions,
+            ),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: TextField(
+                  controller: _messageController,
+                  decoration: const InputDecoration(
+                    hintText: 'Écrire un message...',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: null,
+                  onSubmitted: (_) => _sendMessage(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF4A90A4),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                onPressed: _sendMessage,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAttachmentOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildAttachmentOption(Icons.image, 'Photo', Colors.purple),
+              _buildAttachmentOption(Icons.camera_alt, 'Caméra', Colors.pink),
+              _buildAttachmentOption(Icons.insert_drive_file, 'Document', Colors.blue),
+              _buildAttachmentOption(Icons.location_on, 'Position', Colors.green),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentOption(IconData icon, String label, Color color) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$label bientôt disponible')),
+        );
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showConversationOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.person, color: Color(0xFF4A90A4)),
+              title: const Text('Voir le profil'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.search, color: Color(0xFF4A90A4)),
+              title: const Text('Rechercher dans la conversation'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications_off, color: Colors.orange),
+              title: const Text('Mettre en sourdine'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Supprimer la conversation'),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
