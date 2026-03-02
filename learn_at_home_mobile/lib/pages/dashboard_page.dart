@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'chat_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -171,8 +172,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.pop(context);
-                    // Navigation vers chat via home page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ChatPage()),
+                    );
                   },
                   icon: const Icon(Icons.mail_outline, size: 18),
                   label: const Text('Voir les messages'),

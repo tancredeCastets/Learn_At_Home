@@ -68,7 +68,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
   ];
 
   // Données simulées des contacts
-  final List<Map<String, dynamic>> _contacts = [
+  List<Map<String, dynamic>> _contacts = [
     {'name': 'Marie Dupont', 'avatar': 'M', 'role': 'Bénévole', 'isOnline': true},
     {'name': 'Pierre Martin', 'avatar': 'P', 'role': 'Élève', 'isOnline': true},
     {'name': 'Sophie Bernard', 'avatar': 'S', 'role': 'Bénévole', 'isOnline': false},
@@ -82,6 +82,9 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -104,9 +107,12 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showNewConversationDialog,
+        onPressed: _tabController.index == 0 ? _showNewConversationDialog : _showAddContactDialog,
         backgroundColor: const Color(0xFF4A90A4),
-        child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+        child: Icon(
+          _tabController.index == 0 ? Icons.chat_bubble_outline : Icons.person_add,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -642,11 +648,149 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
               title: const Text('Supprimer le contact'),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                _deleteContact(contact);
+              },
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _deleteContact(Map<String, dynamic> contact) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer le contact'),
+        content: Text('Voulez-vous vraiment supprimer ${contact['name']} de vos contacts ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() {
+        _contacts.removeWhere((c) => c['name'] == contact['name']);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${contact['name']} supprimé de vos contacts')),
+        );
+      }
+    }
+  }
+
+  void _showAddContactDialog() {
+    final nameController = TextEditingController();
+    String selectedRole = 'Élève';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ajouter un contact',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D3748),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Nom du contact',
+                  hintText: 'Ex: Jean Martin',
+                  prefixIcon: const Icon(Icons.person_outline),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedRole,
+                decoration: InputDecoration(
+                  labelText: 'Rôle',
+                  prefixIcon: const Icon(Icons.badge_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                items: ['Élève', 'Bénévole']
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .toList(),
+                onChanged: (value) {
+                  setModalState(() => selectedRole = value!);
+                },
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (nameController.text.isNotEmpty) {
+                      _addContact(nameController.text, selectedRole);
+                      Navigator.pop(context);
+                    }
+                  },
+                  icon: const Icon(Icons.person_add),
+                  label: const Text('Ajouter'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4A90A4),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _addContact(String name, String role) {
+    setState(() {
+      _contacts.add({
+        'name': name,
+        'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
+        'role': role,
+        'isOnline': false,
+      });
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$name ajouté à vos contacts')),
     );
   }
 }
