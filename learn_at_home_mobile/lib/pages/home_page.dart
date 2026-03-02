@@ -72,8 +72,6 @@ class _HomePageState extends State<HomePage> {
               _buildQuickActions(),
               const SizedBox(height: 24),
               _buildUpcomingLessons(),
-              const SizedBox(height: 24),
-              _buildProgress(),
             ],
           ),
         ),
@@ -391,82 +389,4 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildProgress() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Ma progression',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3748),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildProgressItem('Cours complétés', 12, 20, const Color(0xFF4CAF50)),
-              const SizedBox(height: 16),
-              _buildProgressItem('Devoirs rendus', 8, 10, const Color(0xFF2196F3)),
-              const SizedBox(height: 16),
-              _buildProgressItem('Quiz réussis', 5, 8, const Color(0xFFFF9800)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProgressItem(String label, int current, int total, Color color) {
-    final progress = current / total;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF2D3748),
-              ),
-            ),
-            Text(
-              '$current / $total',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: progress,
-            backgroundColor: color.withOpacity(0.2),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 8,
-          ),
-        ),
-      ],
-    );
-  }
 }
