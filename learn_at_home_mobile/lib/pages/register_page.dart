@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -17,6 +18,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   bool _acceptTerms = false;
+  UserRole _selectedRole = UserRole.eleve;
 
   @override
   void dispose() {
@@ -95,7 +97,10 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 20),
               // En-tête
               _buildHeader(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+              // Sélecteur de rôle
+              _buildRoleSelector(),
+              const SizedBox(height: 24),
               // Formulaire d'inscription
               _buildRegisterForm(),
               const SizedBox(height: 16),
@@ -133,6 +138,99 @@ class _RegisterPageState extends State<RegisterPage> {
           style: TextStyle(fontSize: 16, color: Colors.grey[600]),
         ),
       ],
+    );
+  }
+
+  Widget _buildRoleSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Je suis',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF2D3748),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildRoleOption(
+                role: UserRole.eleve,
+                icon: Icons.school_outlined,
+                label: 'Élève',
+                description: 'Je cherche de l\'aide',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildRoleOption(
+                role: UserRole.benevole,
+                icon: Icons.volunteer_activism_outlined,
+                label: 'Bénévole',
+                description: 'Je veux aider',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleOption({
+    required UserRole role,
+    required IconData icon,
+    required String label,
+    required String description,
+  }) {
+    final isSelected = _selectedRole == role;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedRole = role;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF4A90A4).withOpacity(0.1) : Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF4A90A4) : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? const Color(0xFF4A90A4) : Colors.grey[600],
+              size: 32,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? const Color(0xFF4A90A4) : Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
