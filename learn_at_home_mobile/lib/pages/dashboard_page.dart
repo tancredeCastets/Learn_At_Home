@@ -1,0 +1,691 @@
+import 'package:flutter/material.dart';
+
+class DashboardPage extends StatefulWidget {
+  const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  // Données simulées
+  final int _unreadMessages = 5;
+  
+  final List<Map<String, dynamic>> _upcomingTasks = [
+    {
+      'title': 'Exercices de mathématiques',
+      'dueDate': DateTime.now().add(const Duration(days: 1)),
+      'priority': 'haute',
+      'subject': 'Mathématiques',
+      'status': 'todo',
+    },
+    {
+      'title': 'Révision chapitre 5',
+      'dueDate': DateTime.now().add(const Duration(days: 2)),
+      'priority': 'moyenne',
+      'subject': 'Français',
+      'status': 'in_progress',
+    },
+    {
+      'title': 'Préparer exposé',
+      'dueDate': DateTime.now().add(const Duration(days: 3)),
+      'priority': 'basse',
+      'subject': 'Histoire',
+      'status': 'todo',
+    },
+  ];
+
+  final List<Map<String, dynamic>> _upcomingEvents = [
+    {
+      'title': 'Cours de maths',
+      'date': DateTime.now().add(const Duration(hours: 2)),
+      'type': 'cours',
+      'with': 'M. Dupont',
+    },
+    {
+      'title': 'RDV bilan mensuel',
+      'date': DateTime.now().add(const Duration(days: 1, hours: 14)),
+      'type': 'rdv',
+      'with': 'Tuteur principal',
+    },
+    {
+      'title': 'Atelier lecture',
+      'date': DateTime.now().add(const Duration(days: 2, hours: 10)),
+      'type': 'atelier',
+      'with': 'Groupe A',
+    },
+    {
+      'title': 'Cours de français',
+      'date': DateTime.now().add(const Duration(days: 3)),
+      'type': 'cours',
+      'with': 'Mme Martin',
+    },
+  ];
+
+  final Map<String, dynamic> _stats = {
+    'tasksCompleted': 12,
+    'tasksTotal': 18,
+    'hoursThisWeek': 8,
+    'sessionsThisMonth': 15,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
+      appBar: AppBar(
+        title: const Text(
+          'Tableau de bord',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF4A90A4),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Données actualisées')),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Carte de bienvenue avec messages non lus
+            _buildWelcomeCard(),
+            const SizedBox(height: 20),
+            
+            // Statistiques rapides
+            _buildStatsRow(),
+            const SizedBox(height: 24),
+            
+            // To-do list résumée
+            _buildSectionTitle('Mes tâches à venir', Icons.task_alt),
+            const SizedBox(height: 12),
+            _buildTasksList(),
+            const SizedBox(height: 24),
+            
+            // Prochains événements
+            _buildSectionTitle('Prochains événements', Icons.event),
+            const SizedBox(height: 12),
+            _buildEventsList(),
+            const SizedBox(height: 24),
+            
+            // Progression
+            _buildSectionTitle('Ma progression', Icons.trending_up),
+            const SizedBox(height: 12),
+            _buildProgressCard(),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWelcomeCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF4A90A4), Color(0xFF357A8C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4A90A4).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Bonjour ! 👋',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Vous avez $_unreadMessages messages non lus',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    // Navigation vers chat via home page
+                  },
+                  icon: const Icon(Icons.mail_outline, size: 18),
+                  label: const Text('Voir les messages'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF4A90A4),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Stack(
+              children: [
+                const Icon(
+                  Icons.mail,
+                  size: 40,
+                  color: Colors.white,
+                ),
+                if (_unreadMessages > 0)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$_unreadMessages',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            'Tâches',
+            '${_stats['tasksCompleted']}/${_stats['tasksTotal']}',
+            Icons.check_circle_outline,
+            Colors.green,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+            'Heures/sem',
+            '${_stats['hoursThisWeek']}h',
+            Icons.access_time,
+            Colors.blue,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+            'Sessions',
+            '${_stats['sessionsThisMonth']}',
+            Icons.calendar_today,
+            Colors.purple,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF4A90A4), size: 24),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2D3748),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTasksList() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: _upcomingTasks.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final task = _upcomingTasks[index];
+          return _buildTaskItem(task);
+        },
+      ),
+    );
+  }
+
+  Widget _buildTaskItem(Map<String, dynamic> task) {
+    final priorityColors = {
+      'haute': Colors.red,
+      'moyenne': Colors.orange,
+      'basse': Colors.green,
+    };
+    
+    final statusIcons = {
+      'todo': Icons.radio_button_unchecked,
+      'in_progress': Icons.pending,
+      'done': Icons.check_circle,
+    };
+
+    final dueDate = task['dueDate'] as DateTime;
+    final isUrgent = dueDate.difference(DateTime.now()).inDays <= 1;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      leading: Container(
+        width: 4,
+        height: 40,
+        decoration: BoxDecoration(
+          color: priorityColors[task['priority']],
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+      title: Row(
+        children: [
+          Icon(
+            statusIcons[task['status']],
+            size: 18,
+            color: task['status'] == 'done' ? Colors.green : Colors.grey,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              task['title'],
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(left: 26, top: 4),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4A90A4).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                task['subject'],
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF4A90A4),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.access_time,
+              size: 12,
+              color: isUrgent ? Colors.red : Colors.grey,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              _formatDueDate(dueDate),
+              style: TextStyle(
+                fontSize: 11,
+                color: isUrgent ? Colors.red : Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      onTap: () {
+        // Navigation vers les détails de la tâche
+      },
+    );
+  }
+
+  Widget _buildEventsList() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: _upcomingEvents.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final event = _upcomingEvents[index];
+          return _buildEventItem(event);
+        },
+      ),
+    );
+  }
+
+  Widget _buildEventItem(Map<String, dynamic> event) {
+    final typeColors = {
+      'cours': const Color(0xFF4A90A4),
+      'rdv': Colors.purple,
+      'atelier': Colors.orange,
+    };
+    
+    final typeIcons = {
+      'cours': Icons.school,
+      'rdv': Icons.event,
+      'atelier': Icons.groups,
+    };
+
+    final eventDate = event['date'] as DateTime;
+    final isToday = eventDate.day == DateTime.now().day &&
+        eventDate.month == DateTime.now().month &&
+        eventDate.year == DateTime.now().year;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      leading: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: typeColors[event['type']]!.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          typeIcons[event['type']],
+          color: typeColors[event['type']],
+        ),
+      ),
+      title: Text(
+        event['title'],
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(
+                Icons.person_outline,
+                size: 14,
+                color: Colors.grey[600],
+              ),
+              const SizedBox(width: 4),
+              Text(
+                event['with'],
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              Icon(
+                Icons.schedule,
+                size: 14,
+                color: isToday ? Colors.green : Colors.grey[600],
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _formatEventDate(eventDate),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isToday ? Colors.green : Colors.grey[600],
+                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: typeColors[event['type']]!.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          _getEventTypeLabel(event['type']),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: typeColors[event['type']],
+          ),
+        ),
+      ),
+      onTap: () {
+        // Navigation vers les détails de l'événement
+      },
+    );
+  }
+
+  Widget _buildProgressCard() {
+    final completionRate = _stats['tasksCompleted'] / _stats['tasksTotal'];
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Tâches complétées',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+              Text(
+                '${(completionRate * 100).toInt()}%',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4A90A4),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: completionRate,
+              minHeight: 10,
+              backgroundColor: Colors.grey[200],
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4A90A4)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildProgressStat('À faire', _stats['tasksTotal'] - _stats['tasksCompleted'], Colors.orange),
+              _buildProgressStat('Terminées', _stats['tasksCompleted'], Colors.green),
+              _buildProgressStat('Total', _stats['tasksTotal'], const Color(0xFF4A90A4)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressStat(String label, int value, Color color) {
+    return Column(
+      children: [
+        Text(
+          '$value',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDueDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = date.difference(now).inDays;
+    
+    if (difference == 0) {
+      return "Aujourd'hui";
+    } else if (difference == 1) {
+      return 'Demain';
+    } else if (difference < 7) {
+      return 'Dans $difference jours';
+    } else {
+      return '${date.day}/${date.month}';
+    }
+  }
+
+  String _formatEventDate(DateTime date) {
+    final now = DateTime.now();
+    final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
+    final isTomorrow = date.day == now.day + 1 && date.month == now.month && date.year == now.year;
+    
+    final time = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    
+    if (isToday) {
+      return "Aujourd'hui à $time";
+    } else if (isTomorrow) {
+      return 'Demain à $time';
+    } else {
+      return '${date.day}/${date.month} à $time';
+    }
+  }
+
+  String _getEventTypeLabel(String type) {
+    switch (type) {
+      case 'cours':
+        return 'COURS';
+      case 'rdv':
+        return 'RDV';
+      case 'atelier':
+        return 'ATELIER';
+      default:
+        return type.toUpperCase();
+    }
+  }
+}
