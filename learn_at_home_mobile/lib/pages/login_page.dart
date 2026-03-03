@@ -3,8 +3,6 @@ import 'register_page.dart';
 import 'home_page.dart';
 import 'forgot_password_page.dart';
 
-enum UserRole { eleve, benevole }
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -18,7 +16,6 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
-  UserRole _selectedRole = UserRole.eleve;
 
   @override
   void dispose() {
@@ -76,9 +73,6 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 60),
               // Logo et titre
               _buildHeader(),
-              const SizedBox(height: 32),
-              // Sélecteur de rôle
-              _buildRoleSelector(),
               const SizedBox(height: 32),
               // Formulaire de connexion
               _buildLoginForm(),
@@ -213,88 +207,6 @@ class _LoginPageState extends State<LoginPage> {
             },
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRoleSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Je suis',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2D3748),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildRoleOption(
-                role: UserRole.eleve,
-                icon: Icons.school_outlined,
-                label: 'Élève',
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildRoleOption(
-                role: UserRole.benevole,
-                icon: Icons.volunteer_activism_outlined,
-                label: 'Bénévole',
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRoleOption({
-    required UserRole role,
-    required IconData icon,
-    required String label,
-  }) {
-    final isSelected = _selectedRole == role;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedRole = role;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4A90A4).withOpacity(0.1) : Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF4A90A4) : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? const Color(0xFF4A90A4) : Colors.grey[600],
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? const Color(0xFF4A90A4) : Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

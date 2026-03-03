@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 
+enum UserRole { eleve, benevole }
+
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -10,7 +12,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -22,7 +25,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -240,9 +244,9 @@ class _RegisterPageState extends State<RegisterPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Champ nom
+          // Champ prénom
           const Text(
-            'Nom complet',
+            'Prénom',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -251,11 +255,40 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           const SizedBox(height: 8),
           TextFormField(
-            controller: _nameController,
+            controller: _firstNameController,
             keyboardType: TextInputType.name,
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(
-              hintText: 'Entrez votre nom complet',
+              hintText: 'Entrez votre prénom',
+              prefixIcon: Icon(Icons.person_outline, color: Color(0xFF4A90A4)),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Veuillez entrer votre prénom';
+              }
+              if (value.length < 2) {
+                return 'Le prénom doit contenir au moins 2 caractères';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          // Champ nom
+          const Text(
+            'Nom',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2D3748),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _lastNameController,
+            keyboardType: TextInputType.name,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(
+              hintText: 'Entrez votre nom de famille',
               prefixIcon: Icon(Icons.person_outline, color: Color(0xFF4A90A4)),
             ),
             validator: (value) {

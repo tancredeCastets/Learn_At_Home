@@ -186,7 +186,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                 Text(
                   _currentRole == TaskRole.tuteur
                       ? 'Vous pouvez créer et assigner des tâches'
-                      : 'Vos tâches assignées',
+                      : 'Vous pouvez créer des tâches pour vous-même',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],
@@ -393,6 +393,16 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
           return false;
         } else {
           return await _confirmDelete(task['title']);
+        }
+      },
+      onDismissed: (direction) {
+        if (direction == DismissDirection.endToStart) {
+          setState(() {
+            _tasks.removeWhere((t) => t['id'] == task['id']);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('"${task['title']}" supprimée')),
+          );
         }
       },
       child: Container(
@@ -959,12 +969,15 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                   child: ElevatedButton(
                     onPressed: () {
                       if (titleController.text.isNotEmpty) {
+                        final assignee = _currentRole == TaskRole.tuteur 
+                            ? (selectedStudent ?? 'Non assigné')
+                            : 'Moi-même';
                         _addTask(
                           titleController.text,
                           descriptionController.text,
                           selectedSubject,
                           selectedPriority,
-                          selectedStudent ?? 'Non assigné',
+                          assignee,
                           selectedDate,
                         );
                         Navigator.pop(context);
