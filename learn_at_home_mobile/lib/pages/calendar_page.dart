@@ -28,55 +28,49 @@ class _CalendarPageState extends State<CalendarPage> {
     // Ajouter des événements de test
     _events[DateTime(now.year, now.month, now.day)] = [
       {
-        'title': 'Cours de Maths',
-        'time': '14:00 - 15:30',
-        'type': 'cours',
-        'color': const Color(0xFF4CAF50),
-        'with': 'Marie Dupont',
+        'title': 'Séance de soutien',
+        'description': 'Révision des exercices de mathématiques',
+        'startTime': '14:00',
+        'endTime': '15:30',
       },
       {
-        'title': 'Révision Français',
-        'time': '16:00 - 17:00',
-        'type': 'revision',
-        'color': const Color(0xFF2196F3),
-        'with': 'Pierre Martin',
+        'title': 'Aide aux devoirs',
+        'description': 'Préparation du contrôle de français',
+        'startTime': '16:00',
+        'endTime': '17:00',
       },
     ];
 
     _events[DateTime(now.year, now.month, now.day + 1)] = [
       {
-        'title': 'RDV Orientation',
-        'time': '10:00 - 11:00',
-        'type': 'rdv',
-        'color': const Color(0xFFFF9800),
-        'with': 'Sophie Bernard',
+        'title': 'RDV Bilan',
+        'description': 'Point mensuel avec le tuteur',
+        'startTime': '10:00',
+        'endTime': '11:00',
       },
     ];
 
     _events[DateTime(now.year, now.month, now.day + 3)] = [
       {
-        'title': 'Cours de Physique',
-        'time': '09:00 - 10:30',
-        'type': 'cours',
-        'color': const Color(0xFF4CAF50),
-        'with': 'Lucas Petit',
+        'title': 'Séance de physique',
+        'description': 'Chapitre sur l\'électricité',
+        'startTime': '09:00',
+        'endTime': '10:30',
       },
       {
-        'title': 'Aide aux devoirs',
-        'time': '14:00 - 15:00',
-        'type': 'cours',
-        'color': const Color(0xFF9C27B0),
-        'with': 'Emma Leroy',
+        'title': 'Atelier lecture',
+        'description': 'Lecture et compréhension de texte',
+        'startTime': '14:00',
+        'endTime': '15:00',
       },
     ];
 
     _events[DateTime(now.year, now.month, now.day + 5)] = [
       {
-        'title': 'Examen Blanc',
-        'time': '08:00 - 12:00',
-        'type': 'examen',
-        'color': const Color(0xFFF44336),
-        'with': '',
+        'title': 'Révision générale',
+        'description': 'Préparation aux examens de fin de semaine',
+        'startTime': '08:00',
+        'endTime': '12:00',
       },
     ];
   }
@@ -601,7 +595,7 @@ class _CalendarPageState extends State<CalendarPage> {
             width: 4,
             height: 60,
             decoration: BoxDecoration(
-              color: event['color'],
+              color: const Color(0xFF4A90A4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -624,7 +618,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
                     const SizedBox(width: 4),
                     Text(
-                      event['time'],
+                      '${event['startTime']} - ${event['endTime']}',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[600],
@@ -632,20 +626,16 @@ class _CalendarPageState extends State<CalendarPage> {
                     ),
                   ],
                 ),
-                if (event['with'].isNotEmpty) ...[
+                if (event['description'] != null && event['description'].isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.person_outline, size: 14, color: Colors.grey[600]),
-                      const SizedBox(width: 4),
-                      Text(
-                        event['with'],
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
+                  Text(
+                    event['description'],
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ],
@@ -662,7 +652,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
   void _showAddEventDialog() {
     final titleController = TextEditingController();
-    String selectedType = 'cours';
+    final descriptionController = TextEditingController();
     TimeOfDay startTime = const TimeOfDay(hour: 9, minute: 0);
     TimeOfDay endTime = const TimeOfDay(hour: 10, minute: 30);
 
@@ -680,142 +670,113 @@ class _CalendarPageState extends State<CalendarPage> {
             right: 20,
             top: 20,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Nouvel événement',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D3748),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(
-                  labelText: 'Titre',
-                  hintText: 'Ex: Cours de maths',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Nouvel événement',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D3748),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text('Type d\'événement', style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  _buildTypeChip('cours', 'Cours', Colors.green, selectedType, (type) {
-                    setModalState(() => selectedType = type);
-                  }),
-                  _buildTypeChip('rdv', 'RDV', Colors.orange, selectedType, (type) {
-                    setModalState(() => selectedType = type);
-                  }),
-                  _buildTypeChip('revision', 'Révision', Colors.blue, selectedType, (type) {
-                    setModalState(() => selectedType = type);
-                  }),
-                  _buildTypeChip('examen', 'Examen', Colors.red, selectedType, (type) {
-                    setModalState(() => selectedType = type);
-                  }),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Début'),
-                      subtitle: Text('${startTime.format(context)}'),
-                      onTap: () async {
-                        final time = await showTimePicker(
-                          context: context,
-                          initialTime: startTime,
-                        );
-                        if (time != null) {
-                          setModalState(() => startTime = time);
-                        }
-                      },
+                const SizedBox(height: 20),
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Titre',
+                    hintText: 'Ex: Séance de soutien',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  Expanded(
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Fin'),
-                      subtitle: Text('${endTime.format(context)}'),
-                      onTap: () async {
-                        final time = await showTimePicker(
-                          context: context,
-                          initialTime: endTime,
-                        );
-                        if (time != null) {
-                          setModalState(() => endTime = time);
-                        }
-                      },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    hintText: 'Détails de l\'événement...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (titleController.text.isNotEmpty) {
-                      _addEvent(
-                        titleController.text,
-                        selectedType,
-                        startTime,
-                        endTime,
-                      );
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text('Ajouter'),
                 ),
-              ),
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Début'),
+                        subtitle: Text(startTime.format(context)),
+                        onTap: () async {
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime: startTime,
+                          );
+                          if (time != null) {
+                            setModalState(() => startTime = time);
+                          }
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Fin'),
+                        subtitle: Text(endTime.format(context)),
+                        onTap: () async {
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime: endTime,
+                          );
+                          if (time != null) {
+                            setModalState(() => endTime = time);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (titleController.text.isNotEmpty) {
+                        _addEvent(
+                          titleController.text,
+                          descriptionController.text,
+                          startTime,
+                          endTime,
+                        );
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: const Text('Ajouter'),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTypeChip(String value, String label, Color color, String selected, Function(String) onSelect) {
-    final isSelected = value == selected;
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => onSelect(value),
-      selectedColor: color.withOpacity(0.2),
-      checkmarkColor: color,
-      labelStyle: TextStyle(
-        color: isSelected ? color : Colors.grey[600],
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-      ),
-    );
-  }
-
-  void _addEvent(String title, String type, TimeOfDay start, TimeOfDay end) {
-    final colors = {
-      'cours': const Color(0xFF4CAF50),
-      'rdv': const Color(0xFFFF9800),
-      'revision': const Color(0xFF2196F3),
-      'examen': const Color(0xFFF44336),
-    };
-
+  void _addEvent(String title, String description, TimeOfDay start, TimeOfDay end) {
     final key = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
     final newEvent = {
       'title': title,
-      'time': '${start.format(context)} - ${end.format(context)}',
-      'type': type,
-      'color': colors[type],
-      'with': '',
+      'description': description,
+      'startTime': '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}',
+      'endTime': '${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}',
     };
 
     setState(() {
