@@ -200,14 +200,6 @@ class _HomePageState extends State<HomePage> {
           children: [
             Expanded(
               child: _buildActionCard(
-                icon: Icons.video_call,
-                title: 'Rejoindre un cours',
-                color: const Color(0xFF4CAF50),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildActionCard(
                 icon: Icons.assignment,
                 title: 'Mes tâches',
                 color: const Color(0xFFFF9800),
@@ -219,6 +211,20 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildActionCard(
+                icon: Icons.calendar_today,
+                title: 'Calendrier',
+                color: const Color(0xFF4CAF50),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CalendarPage()),
+                  );
+                },
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -226,17 +232,29 @@ class _HomePageState extends State<HomePage> {
           children: [
             Expanded(
               child: _buildActionCard(
-                icon: Icons.book,
-                title: 'Mes cours',
+                icon: Icons.chat_bubble,
+                title: 'Messages',
                 color: const Color(0xFF2196F3),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ChatPage()),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildActionCard(
-                icon: Icons.help_outline,
-                title: 'Aide',
+                icon: Icons.dashboard,
+                title: 'Tableau de bord',
                 color: const Color(0xFF9C27B0),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const DashboardPage()),
+                  );
+                },
               ),
             ),
           ],
@@ -300,7 +318,7 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Prochains cours',
+              'Prochains événements',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -308,7 +326,12 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CalendarPage()),
+                );
+              },
               child: const Text(
                 'Voir tout',
                 style: TextStyle(color: Color(0xFF4A90A4)),
@@ -317,16 +340,16 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         const SizedBox(height: 12),
-        _buildLessonCard(
-          subject: 'Mathématiques',
-          teacher: 'M. Dupont',
+        _buildEventCard(
+          title: 'Séance de soutien',
+          description: 'Avec Marie Dupont',
           time: '14:00 - 15:30',
           color: const Color(0xFF4CAF50),
         ),
         const SizedBox(height: 12),
-        _buildLessonCard(
-          subject: 'Français',
-          teacher: 'Mme Martin',
+        _buildEventCard(
+          title: 'Révision Français',
+          description: 'Avec Pierre Martin',
           time: '16:00 - 17:30',
           color: const Color(0xFF2196F3),
         ),
@@ -334,9 +357,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildLessonCard({
-    required String subject,
-    required String teacher,
+  Widget _buildEventCard({
+    required String title,
+    required String description,
     required String time,
     required Color color,
   }) {
@@ -369,7 +392,7 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  subject,
+                  title,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -378,7 +401,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  teacher,
+                  description,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
