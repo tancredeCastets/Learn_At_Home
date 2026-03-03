@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../pages/home_page.dart';
-import '../pages/calendar_page.dart';
-import '../pages/chat_page.dart';
-import '../pages/tasks_page.dart';
 import '../pages/dashboard_page.dart';
+import '../pages/calendar_page.dart';
+import '../pages/tasks_page.dart';
+import '../pages/chat_page.dart';
 
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -23,9 +22,9 @@ class AppBottomNavBar extends StatelessWidget {
       unselectedItemColor: Colors.grey,
       items: const [
         BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'Accueil',
+          icon: Icon(Icons.dashboard_outlined),
+          activeIcon: Icon(Icons.dashboard),
+          label: 'Tableau',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_today_outlined),
@@ -42,11 +41,6 @@ class AppBottomNavBar extends StatelessWidget {
           activeIcon: Icon(Icons.chat_bubble),
           label: 'Messages',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard_outlined),
-          activeIcon: Icon(Icons.dashboard),
-          label: 'Tableau',
-        ),
       ],
     );
   }
@@ -57,7 +51,7 @@ class AppBottomNavBar extends StatelessWidget {
     Widget page;
     switch (index) {
       case 0:
-        page = const HomePage();
+        page = const DashboardPage();
         break;
       case 1:
         page = const CalendarPage();
@@ -67,9 +61,6 @@ class AppBottomNavBar extends StatelessWidget {
         break;
       case 3:
         page = const ChatPage();
-        break;
-      case 4:
-        page = const DashboardPage();
         break;
       default:
         return;

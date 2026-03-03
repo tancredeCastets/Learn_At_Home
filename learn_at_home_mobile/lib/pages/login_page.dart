@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart';
-import 'home_page.dart';
+import 'dashboard_page.dart';
 import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -47,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
         // Naviguer vers la page d'accueil en remplaçant la page de connexion
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) => const DashboardPage()),
         );
       }
     }
