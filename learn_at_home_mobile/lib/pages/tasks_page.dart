@@ -28,44 +28,36 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
       'title': 'Exercices de maths - Chapitre 5',
       'description': 'Faire les exercices 1 à 10 page 42',
       'dueDate': DateTime.now().add(const Duration(days: 2)),
-      'priority': 'haute',
       'status': 'en_cours',
       'assignedTo': 'Pierre Martin',
       'assignedBy': 'Marie Dupont',
-      'subject': 'Mathématiques',
     },
     {
       'id': '2',
       'title': 'Révision vocabulaire anglais',
       'description': 'Apprendre les 20 nouveaux mots',
       'dueDate': DateTime.now().add(const Duration(days: 1)),
-      'priority': 'moyenne',
       'status': 'todo',
       'assignedTo': 'Emma Leroy',
       'assignedBy': 'Marie Dupont',
-      'subject': 'Anglais',
     },
     {
       'id': '3',
       'title': 'Rédaction français',
       'description': 'Écrire une rédaction de 300 mots sur le thème "Mon héros"',
       'dueDate': DateTime.now().add(const Duration(days: 5)),
-      'priority': 'basse',
       'status': 'todo',
       'assignedTo': 'Lucas Petit',
       'assignedBy': 'Marie Dupont',
-      'subject': 'Français',
     },
     {
       'id': '4',
       'title': 'Préparer exposé histoire',
       'description': 'Recherches sur la Révolution française',
       'dueDate': DateTime.now().subtract(const Duration(days: 1)),
-      'priority': 'haute',
       'status': 'termine',
       'assignedTo': 'Pierre Martin',
       'assignedBy': 'Marie Dupont',
-      'subject': 'Histoire',
     },
   ];
 
@@ -355,12 +347,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
   }
 
   Widget _buildTaskCard(Map<String, dynamic> task) {
-    final priorityColors = {
-      'haute': Colors.red,
-      'moyenne': Colors.orange,
-      'basse': Colors.green,
-    };
-
     final isOverdue = task['dueDate'].isBefore(DateTime.now()) && task['status'] != 'termine';
 
     return Dismissible(
@@ -431,7 +417,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                       width: 4,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: priorityColors[task['priority']],
+                        color: const Color(0xFF4A90A4),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -451,48 +437,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                                   : null,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF4A90A4).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  task['subject'],
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF4A90A4),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: priorityColors[task['priority']]!.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  task['priority'].toString().toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: priorityColors[task['priority']],
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+
                         ],
                       ),
                     ),
@@ -742,11 +687,9 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                 ),
               ),
               const SizedBox(height: 16),
-              _buildDetailRow(Icons.subject, 'Matière', task['subject']),
               _buildDetailRow(Icons.person, 'Assigné à', task['assignedTo']),
               _buildDetailRow(Icons.person_outline, 'Assigné par', task['assignedBy']),
               _buildDetailRow(Icons.calendar_today, 'Échéance', _formatDate(task['dueDate'])),
-              _buildDetailRow(Icons.flag, 'Priorité', task['priority']),
               const SizedBox(height: 16),
               const Text(
                 'Description',
@@ -834,9 +777,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
   void _showAddTaskDialog() {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
-    String selectedPriority = 'moyenne';
     String? selectedStudent;
-    String selectedSubject = 'Mathématiques';
     DateTime selectedDate = DateTime.now().add(const Duration(days: 7));
 
     showModalBottomSheet(
@@ -890,22 +831,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                   ),
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedSubject,
-                  decoration: InputDecoration(
-                    labelText: 'Matière',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: ['Mathématiques', 'Français', 'Anglais', 'Histoire', 'Physique']
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                      .toList(),
-                  onChanged: (value) {
-                    setModalState(() => selectedSubject = value!);
-                  },
-                ),
-                const SizedBox(height: 16),
                 if (_currentRole == TaskRole.tuteur)
                   DropdownButtonFormField<String>(
                     value: selectedStudent,
@@ -925,24 +850,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                       setModalState(() => selectedStudent = value);
                     },
                   ),
-                const SizedBox(height: 16),
-                const Text('Priorité', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _buildPriorityChip('basse', 'Basse', Colors.green, selectedPriority, (p) {
-                      setModalState(() => selectedPriority = p);
-                    }),
-                    const SizedBox(width: 8),
-                    _buildPriorityChip('moyenne', 'Moyenne', Colors.orange, selectedPriority, (p) {
-                      setModalState(() => selectedPriority = p);
-                    }),
-                    const SizedBox(width: 8),
-                    _buildPriorityChip('haute', 'Haute', Colors.red, selectedPriority, (p) {
-                      setModalState(() => selectedPriority = p);
-                    }),
-                  ],
-                ),
                 const SizedBox(height: 16),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -973,8 +880,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                         _addTask(
                           titleController.text,
                           descriptionController.text,
-                          selectedSubject,
-                          selectedPriority,
                           assignee,
                           selectedDate,
                         );
@@ -993,37 +898,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
     );
   }
 
-  Widget _buildPriorityChip(
-    String value,
-    String label,
-    Color color,
-    String selected,
-    Function(String) onSelect,
-  ) {
-    final isSelected = value == selected;
-    return GestureDetector(
-      onTap: () => onSelect(value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.2) : Colors.grey[100],
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? color : Colors.grey[300]!,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? color : Colors.grey[600],
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-
   String _formatFullDate(DateTime date) {
     final months = [
       'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
@@ -1035,8 +909,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
   void _addTask(
     String title,
     String description,
-    String subject,
-    String priority,
     String assignedTo,
     DateTime dueDate,
   ) {
@@ -1046,11 +918,9 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
         'title': title,
         'description': description,
         'dueDate': dueDate,
-        'priority': priority,
         'status': 'todo',
         'assignedTo': assignedTo,
         'assignedBy': 'Vous',
-        'subject': subject,
       });
     });
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1061,9 +931,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
   void _showEditTaskDialog(Map<String, dynamic> task) {
     final titleController = TextEditingController(text: task['title']);
     final descriptionController = TextEditingController(text: task['description']);
-    String selectedPriority = task['priority'];
     String selectedStudent = task['assignedTo'];
-    String selectedSubject = task['subject'];
     DateTime selectedDate = task['dueDate'];
 
     showModalBottomSheet(
@@ -1117,22 +985,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                   ),
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedSubject,
-                  decoration: InputDecoration(
-                    labelText: 'Matière',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: ['Mathématiques', 'Français', 'Anglais', 'Histoire', 'Physique']
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                      .toList(),
-                  onChanged: (value) {
-                    setModalState(() => selectedSubject = value!);
-                  },
-                ),
-                const SizedBox(height: 16),
                 if (_currentRole == TaskRole.tuteur)
                   DropdownButtonFormField<String>(
                     value: _students.any((s) => s['name'] == selectedStudent) ? selectedStudent : null,
@@ -1152,24 +1004,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                       setModalState(() => selectedStudent = value!);
                     },
                   ),
-                const SizedBox(height: 16),
-                const Text('Priorité', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _buildPriorityChip('basse', 'Basse', Colors.green, selectedPriority, (p) {
-                      setModalState(() => selectedPriority = p);
-                    }),
-                    const SizedBox(width: 8),
-                    _buildPriorityChip('moyenne', 'Moyenne', Colors.orange, selectedPriority, (p) {
-                      setModalState(() => selectedPriority = p);
-                    }),
-                    const SizedBox(width: 8),
-                    _buildPriorityChip('haute', 'Haute', Colors.red, selectedPriority, (p) {
-                      setModalState(() => selectedPriority = p);
-                    }),
-                  ],
-                ),
                 const SizedBox(height: 16),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -1198,8 +1032,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                           task,
                           titleController.text,
                           descriptionController.text,
-                          selectedSubject,
-                          selectedPriority,
                           selectedStudent,
                           selectedDate,
                         );
@@ -1222,16 +1054,12 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
     Map<String, dynamic> task,
     String title,
     String description,
-    String subject,
-    String priority,
     String assignedTo,
     DateTime dueDate,
   ) {
     setState(() {
       task['title'] = title;
       task['description'] = description;
-      task['subject'] = subject;
-      task['priority'] = priority;
       task['assignedTo'] = assignedTo;
       task['dueDate'] = dueDate;
     });
