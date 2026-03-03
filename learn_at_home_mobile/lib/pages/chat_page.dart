@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'chat_conversation_page.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -114,6 +115,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           color: Colors.white,
         ),
       ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 3),
     );
   }
 

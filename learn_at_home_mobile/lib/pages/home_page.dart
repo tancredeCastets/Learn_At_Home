@@ -3,6 +3,7 @@ import 'chat_page.dart';
 import 'calendar_page.dart';
 import 'tasks_page.dart';
 import 'dashboard_page.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,34 +13,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
-
-  void _onItemTapped(int index) {
-    if (index == 1) {
-      // Navigation vers la page Calendrier
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const CalendarPage()),
-      );
-    } else if (index == 2) {
-      // Navigation vers la page Messages
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ChatPage()),
-      );
-    } else if (index == 3) {
-      // Navigation vers le tableau de bord
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const DashboardPage()),
-      );
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,35 +57,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF4A90A4),
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Accueil',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today_outlined),
-            activeIcon: Icon(Icons.calendar_today),
-            label: 'Planning',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            activeIcon: Icon(Icons.chat_bubble),
-            label: 'Messages',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Tableau',
-          ),
-        ],
-      ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 0),
     );
   }
 

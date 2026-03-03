@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'chat_page.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -126,6 +127,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 4),
     );
   }
 

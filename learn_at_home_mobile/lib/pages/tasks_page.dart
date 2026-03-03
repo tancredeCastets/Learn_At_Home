@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 enum TaskRole { eleve, tuteur }
 
@@ -110,6 +111,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
         backgroundColor: const Color(0xFF4A90A4),
         child: const Icon(Icons.add, color: Colors.white),
       ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
     );
   }
 
@@ -117,10 +119,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF2D3748)),
-        onPressed: () => Navigator.pop(context),
-      ),
       title: const Text(
         'Gestion des Tâches',
         style: TextStyle(

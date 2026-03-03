@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -105,6 +106,7 @@ class _CalendarPageState extends State<CalendarPage> {
         backgroundColor: const Color(0xFF4A90A4),
         child: const Icon(Icons.add, color: Colors.white),
       ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
     );
   }
 
@@ -112,10 +114,6 @@ class _CalendarPageState extends State<CalendarPage> {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF2D3748)),
-        onPressed: () => Navigator.pop(context),
-      ),
       title: const Text(
         'Calendrier',
         style: TextStyle(
