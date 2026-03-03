@@ -16,23 +16,20 @@ class _DashboardPageState extends State<DashboardPage> {
   final List<Map<String, dynamic>> _upcomingTasks = [
     {
       'title': 'Exercices de mathématiques',
+      'description': 'Faire les exercices 1 à 10 page 42',
       'dueDate': DateTime.now().add(const Duration(days: 1)),
-      'priority': 'haute',
-      'subject': 'Mathématiques',
       'status': 'todo',
     },
     {
       'title': 'Révision chapitre 5',
+      'description': 'Relire et résumer le chapitre',
       'dueDate': DateTime.now().add(const Duration(days: 2)),
-      'priority': 'moyenne',
-      'subject': 'Français',
       'status': 'in_progress',
     },
     {
       'title': 'Préparer exposé',
+      'description': 'Recherches et plan de l\'exposé',
       'dueDate': DateTime.now().add(const Duration(days: 3)),
-      'priority': 'basse',
-      'subject': 'Histoire',
       'status': 'todo',
     },
   ];
@@ -40,27 +37,23 @@ class _DashboardPageState extends State<DashboardPage> {
   final List<Map<String, dynamic>> _upcomingEvents = [
     {
       'title': 'Cours de maths',
+      'description': 'Séance de soutien en mathématiques',
       'date': DateTime.now().add(const Duration(hours: 2)),
-      'type': 'cours',
-      'with': 'M. Dupont',
     },
     {
       'title': 'RDV bilan mensuel',
+      'description': 'Point sur la progression',
       'date': DateTime.now().add(const Duration(days: 1, hours: 14)),
-      'type': 'rdv',
-      'with': 'Tuteur principal',
     },
     {
       'title': 'Atelier lecture',
+      'description': 'Lecture et compréhension de texte',
       'date': DateTime.now().add(const Duration(days: 2, hours: 10)),
-      'type': 'atelier',
-      'with': 'Groupe A',
     },
     {
       'title': 'Cours de français',
+      'description': 'Grammaire et conjugaison',
       'date': DateTime.now().add(const Duration(days: 3)),
-      'type': 'cours',
-      'with': 'Mme Martin',
     },
   ];
 
@@ -351,12 +344,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildTaskItem(Map<String, dynamic> task) {
-    final priorityColors = {
-      'haute': Colors.red,
-      'moyenne': Colors.orange,
-      'basse': Colors.green,
-    };
-    
     final statusIcons = {
       'todo': Icons.radio_button_unchecked,
       'in_progress': Icons.pending,
@@ -372,7 +359,7 @@ class _DashboardPageState extends State<DashboardPage> {
         width: 4,
         height: 40,
         decoration: BoxDecoration(
-          color: priorityColors[task['priority']],
+          color: const Color(0xFF4A90A4),
           borderRadius: BorderRadius.circular(2),
         ),
       ),
@@ -399,21 +386,6 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.only(left: 26, top: 4),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFF4A90A4).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                task['subject'],
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF4A90A4),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
             Icon(
               Icons.access_time,
               size: 12,
@@ -464,18 +436,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildEventItem(Map<String, dynamic> event) {
-    final typeColors = {
-      'cours': const Color(0xFF4A90A4),
-      'rdv': Colors.purple,
-      'atelier': Colors.orange,
-    };
-    
-    final typeIcons = {
-      'cours': Icons.school,
-      'rdv': Icons.event,
-      'atelier': Icons.groups,
-    };
-
     final eventDate = event['date'] as DateTime;
     final isToday = eventDate.day == DateTime.now().day &&
         eventDate.month == DateTime.now().month &&
@@ -487,12 +447,12 @@ class _DashboardPageState extends State<DashboardPage> {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: typeColors[event['type']]!.withOpacity(0.1),
+          color: const Color(0xFF4A90A4).withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(
-          typeIcons[event['type']],
-          color: typeColors[event['type']],
+        child: const Icon(
+          Icons.event,
+          color: Color(0xFF4A90A4),
         ),
       ),
       title: Text(
@@ -506,23 +466,16 @@ class _DashboardPageState extends State<DashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                Icons.person_outline,
-                size: 14,
+          if (event['description'] != null && event['description'].isNotEmpty)
+            Text(
+              event['description'],
+              style: TextStyle(
+                fontSize: 12,
                 color: Colors.grey[600],
               ),
-              const SizedBox(width: 4),
-              Text(
-                event['with'],
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           const SizedBox(height: 2),
           Row(
             children: [
@@ -544,21 +497,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: typeColors[event['type']]!.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          _getEventTypeLabel(event['type']),
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: typeColors[event['type']],
-          ),
-        ),
-      ),
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
       onTap: () {
         // Navigation vers les détails de l'événement
       },
@@ -678,19 +617,6 @@ class _DashboardPageState extends State<DashboardPage> {
       return 'Demain à $time';
     } else {
       return '${date.day}/${date.month} à $time';
-    }
-  }
-
-  String _getEventTypeLabel(String type) {
-    switch (type) {
-      case 'cours':
-        return 'COURS';
-      case 'rdv':
-        return 'RDV';
-      case 'atelier':
-        return 'ATELIER';
-      default:
-        return type.toUpperCase();
     }
   }
 }
