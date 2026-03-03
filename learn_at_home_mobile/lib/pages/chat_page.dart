@@ -23,8 +23,6 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       'lastMessage': 'D\'accord, on se voit demain pour le cours de maths !',
       'time': '14:30',
       'unread': 2,
-      'isOnline': true,
-      'role': 'Bénévole',
     },
     {
       'id': '2',
@@ -33,8 +31,6 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       'lastMessage': 'As-tu compris l\'exercice 3 ?',
       'time': '12:15',
       'unread': 0,
-      'isOnline': true,
-      'role': 'Élève',
     },
     {
       'id': '3',
@@ -43,8 +39,6 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       'lastMessage': 'Merci pour ton aide !',
       'time': 'Hier',
       'unread': 0,
-      'isOnline': false,
-      'role': 'Bénévole',
     },
     {
       'id': '4',
@@ -53,8 +47,6 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       'lastMessage': 'Je t\'envoie les documents ce soir.',
       'time': 'Hier',
       'unread': 1,
-      'isOnline': false,
-      'role': 'Élève',
     },
     {
       'id': '5',
@@ -63,20 +55,18 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       'lastMessage': 'À quelle heure le prochain cours ?',
       'time': 'Lun',
       'unread': 0,
-      'isOnline': true,
-      'role': 'Élève',
     },
   ];
 
   // Données simulées des contacts
   List<Map<String, dynamic>> _contacts = [
-    {'name': 'Marie Dupont', 'avatar': 'M', 'role': 'Bénévole', 'isOnline': true},
-    {'name': 'Pierre Martin', 'avatar': 'P', 'role': 'Élève', 'isOnline': true},
-    {'name': 'Sophie Bernard', 'avatar': 'S', 'role': 'Bénévole', 'isOnline': false},
-    {'name': 'Lucas Petit', 'avatar': 'L', 'role': 'Élève', 'isOnline': false},
-    {'name': 'Emma Leroy', 'avatar': 'E', 'role': 'Élève', 'isOnline': true},
-    {'name': 'Thomas Moreau', 'avatar': 'T', 'role': 'Bénévole', 'isOnline': false},
-    {'name': 'Julie Garcia', 'avatar': 'J', 'role': 'Bénévole', 'isOnline': true},
+    {'name': 'Marie Dupont', 'avatar': 'M'},
+    {'name': 'Pierre Martin', 'avatar': 'P'},
+    {'name': 'Sophie Bernard', 'avatar': 'S'},
+    {'name': 'Lucas Petit', 'avatar': 'L'},
+    {'name': 'Emma Leroy', 'avatar': 'E'},
+    {'name': 'Thomas Moreau', 'avatar': 'T'},
+    {'name': 'Julie Garcia', 'avatar': 'J'},
   ];
 
   @override
@@ -242,20 +232,6 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                   ),
                 ),
               ),
-              if (conversation['isOnline'])
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                ),
             ],
           ),
           title: Row(
@@ -323,39 +299,21 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       return contact['name'].toLowerCase().contains(_searchController.text.toLowerCase());
     }).toList();
 
-    // Grouper par rôle
-    final benevoles = filteredContacts.where((c) => c['role'] == 'Bénévole').toList();
-    final eleves = filteredContacts.where((c) => c['role'] == 'Élève').toList();
+    if (filteredContacts.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.people_outline,
+        title: 'Aucun contact',
+        subtitle: 'Ajoutez des contacts pour commencer',
+      );
+    }
 
-    return ListView(
+    return ListView.builder(
       padding: const EdgeInsets.all(12),
-      children: [
-        if (benevoles.isNotEmpty) ...[
-          _buildContactSection('Bénévoles', benevoles),
-          const SizedBox(height: 16),
-        ],
-        if (eleves.isNotEmpty) _buildContactSection('Élèves', eleves),
-      ],
-    );
-  }
-
-  Widget _buildContactSection(String title, List<Map<String, dynamic>> contacts) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF4A90A4),
-            ),
-          ),
-        ),
-        ...contacts.map((contact) => _buildContactTile(contact)),
-      ],
+      itemCount: filteredContacts.length,
+      itemBuilder: (context, index) {
+        final contact = filteredContacts[index];
+        return _buildContactTile(contact);
+      },
     );
   }
 
@@ -375,47 +333,22 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Stack(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
-              child: Text(
-                contact['avatar'],
-                style: const TextStyle(
-                  color: Color(0xFF4A90A4),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+          child: Text(
+            contact['avatar'],
+            style: const TextStyle(
+              color: Color(0xFF4A90A4),
+              fontWeight: FontWeight.bold,
             ),
-            if (contact['isOnline'])
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                ),
-              ),
-          ],
+          ),
         ),
         title: Text(
           contact['name'],
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             color: Color(0xFF2D3748),
-          ),
-        ),
-        subtitle: Text(
-          contact['isOnline'] ? 'En ligne' : 'Hors ligne',
-          style: TextStyle(
-            color: contact['isOnline'] ? Colors.green : Colors.grey,
-            fontSize: 12,
           ),
         ),
         trailing: Row(
@@ -479,7 +412,6 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         builder: (context) => ChatConversationPage(
           contactName: conversation['name'],
           contactAvatar: conversation['avatar'],
-          isOnline: conversation['isOnline'],
         ),
       ),
     );
@@ -492,7 +424,6 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         builder: (context) => ChatConversationPage(
           contactName: contact['name'],
           contactAvatar: contact['avatar'],
-          isOnline: contact['isOnline'],
         ),
       ),
     );
@@ -572,7 +503,6 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                       ),
                     ),
                     title: Text(contact['name']),
-                    subtitle: Text(contact['role']),
                     onTap: () {
                       Navigator.pop(context);
                       _startConversationWithContact(contact);
@@ -695,7 +625,6 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
 
   void _showAddContactDialog() {
     final nameController = TextEditingController();
-    String selectedRole = 'Élève';
 
     showModalBottomSheet(
       context: context,
@@ -735,30 +664,13 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedRole,
-                decoration: InputDecoration(
-                  labelText: 'Rôle',
-                  prefixIcon: const Icon(Icons.badge_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items: ['Élève', 'Bénévole']
-                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                    .toList(),
-                onChanged: (value) {
-                  setModalState(() => selectedRole = value!);
-                },
-              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
                     if (nameController.text.isNotEmpty) {
-                      _addContact(nameController.text, selectedRole);
+                      _addContact(nameController.text);
                       Navigator.pop(context);
                     }
                   },
@@ -782,13 +694,11 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     );
   }
 
-  void _addContact(String name, String role) {
+  void _addContact(String name) {
     setState(() {
       _contacts.add({
         'name': name,
         'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
-        'role': role,
-        'isOnline': false,
       });
     });
     ScaffoldMessenger.of(context).showSnackBar(

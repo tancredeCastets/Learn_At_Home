@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 class ChatConversationPage extends StatefulWidget {
   final String contactName;
   final String contactAvatar;
-  final bool isOnline;
 
   const ChatConversationPage({
     super.key,
     required this.contactName,
     required this.contactAvatar,
-    required this.isOnline,
   });
 
   @override
@@ -25,52 +23,52 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   final List<Map<String, dynamic>> _messages = [
     {
       'id': '1',
-      'text': 'Salut ! Comment ça va ?',
+      'content': 'Salut ! Comment ça va ?',
       'isMe': false,
-      'time': '14:00',
-      'status': 'read',
+      'sent_at': '14:00',
+      'read_at': '14:01',
     },
     {
       'id': '2',
-      'text': 'Très bien merci ! Et toi ?',
+      'content': 'Très bien merci ! Et toi ?',
       'isMe': true,
-      'time': '14:02',
-      'status': 'read',
+      'sent_at': '14:02',
+      'read_at': '14:02',
     },
     {
       'id': '3',
-      'text': 'Ça va bien ! Tu as réussi à faire l\'exercice de maths ?',
+      'content': 'Ça va bien ! Tu as réussi à faire l\'exercice de maths ?',
       'isMe': false,
-      'time': '14:05',
-      'status': 'read',
+      'sent_at': '14:05',
+      'read_at': '14:05',
     },
     {
       'id': '4',
-      'text': 'Oui, j\'ai eu un peu de mal avec la question 3 mais j\'ai fini par comprendre.',
+      'content': 'Oui, j\'ai eu un peu de mal avec la question 3 mais j\'ai fini par comprendre.',
       'isMe': true,
-      'time': '14:08',
-      'status': 'read',
+      'sent_at': '14:08',
+      'read_at': '14:08',
     },
     {
       'id': '5',
-      'text': 'Super ! Si tu veux, on peut revoir ça ensemble demain.',
+      'content': 'Super ! Si tu veux, on peut revoir ça ensemble demain.',
       'isMe': false,
-      'time': '14:10',
-      'status': 'read',
+      'sent_at': '14:10',
+      'read_at': '14:10',
     },
     {
       'id': '6',
-      'text': 'Ce serait génial ! On se retrouve à quelle heure ?',
+      'content': 'Ce serait génial ! On se retrouve à quelle heure ?',
       'isMe': true,
-      'time': '14:12',
-      'status': 'read',
+      'sent_at': '14:12',
+      'read_at': '14:12',
     },
     {
       'id': '7',
-      'text': 'D\'accord, on se voit demain pour le cours de maths !',
+      'content': 'D\'accord, on se voit demain pour le cours de maths !',
       'isMe': false,
-      'time': '14:30',
-      'status': 'read',
+      'sent_at': '14:30',
+      'read_at': '14:30',
     },
   ];
 
@@ -87,10 +85,10 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     setState(() {
       _messages.add({
         'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'text': _messageController.text.trim(),
+        'content': _messageController.text.trim(),
         'isMe': true,
-        'time': _formatTime(DateTime.now()),
-        'status': 'sent',
+        'sent_at': _formatTime(DateTime.now()),
+        'read_at': null,
       });
       _messageController.clear();
     });
@@ -119,10 +117,10 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           _isTyping = false;
           _messages.add({
             'id': DateTime.now().millisecondsSinceEpoch.toString(),
-            'text': 'D\'accord, c\'est noté ! 👍',
+            'content': 'D\'accord, c\'est noté ! 👍',
             'isMe': false,
-            'time': _formatTime(DateTime.now()),
-            'status': 'read',
+            'sent_at': _formatTime(DateTime.now()),
+            'read_at': _formatTime(DateTime.now()),
           });
         });
 
@@ -181,43 +179,17 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                   ),
                 ),
               ),
-              if (widget.isOnline)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                ),
             ],
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.contactName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3748),
-                  ),
-                ),
-                Text(
-                  widget.isOnline ? 'En ligne' : 'Hors ligne',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: widget.isOnline ? Colors.green : Colors.grey,
-                  ),
-                ),
-              ],
+            child: Text(
+              widget.contactName,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2D3748),
+              ),
             ),
           ),
         ],
@@ -311,7 +283,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    message['text'],
+                    message['content'],
                     style: TextStyle(
                       color: isMe ? Colors.white : const Color(0xFF2D3748),
                       fontSize: 15,
@@ -322,7 +294,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        message['time'],
+                        message['sent_at'],
                         style: TextStyle(
                           color: isMe ? Colors.white70 : Colors.grey,
                           fontSize: 11,
@@ -331,7 +303,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                       if (isMe) ...[
                         const SizedBox(width: 4),
                         Icon(
-                          message['status'] == 'read'
+                          message['read_at'] != null
                               ? Icons.done_all
                               : Icons.done,
                           size: 14,
