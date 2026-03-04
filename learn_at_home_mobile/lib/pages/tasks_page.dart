@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/bottom_nav_bar.dart';
 
 enum TaskRole { eleve, tuteur }
@@ -13,6 +14,7 @@ class TasksPage extends StatefulWidget {
 class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   TaskRole _currentRole = TaskRole.tuteur; // Simuler le rôle actuel
+  bool _isLoading = true;
 
   // Élèves du tuteur (simulés)
   final List<Map<String, dynamic>> _students = [
@@ -21,50 +23,59 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
     {'id': '3', 'name': 'Lucas Petit', 'avatar': 'L'},
   ];
 
-  // Tâches simulées
-  final List<Map<String, dynamic>> _tasks = [
-    {
-      'id': '1',
-      'title': 'Exercices de maths - Chapitre 5',
-      'description': 'Faire les exercices 1 à 10 page 42',
-      'dueDate': DateTime.now().add(const Duration(days: 2)),
-      'status': 'en_cours',
-      'assignedTo': 'Pierre Martin',
-      'assignedBy': 'Marie Dupont',
-    },
-    {
-      'id': '2',
-      'title': 'Révision vocabulaire anglais',
-      'description': 'Apprendre les 20 nouveaux mots',
-      'dueDate': DateTime.now().add(const Duration(days: 1)),
-      'status': 'todo',
-      'assignedTo': 'Emma Leroy',
-      'assignedBy': 'Marie Dupont',
-    },
-    {
-      'id': '3',
-      'title': 'Rédaction français',
-      'description': 'Écrire une rédaction de 300 mots sur le thème "Mon héros"',
-      'dueDate': DateTime.now().add(const Duration(days: 5)),
-      'status': 'todo',
-      'assignedTo': 'Lucas Petit',
-      'assignedBy': 'Marie Dupont',
-    },
-    {
-      'id': '4',
-      'title': 'Préparer exposé histoire',
-      'description': 'Recherches sur la Révolution française',
-      'dueDate': DateTime.now().subtract(const Duration(days: 1)),
-      'status': 'termine',
-      'assignedTo': 'Pierre Martin',
-      'assignedBy': 'Marie Dupont',
-    },
-  ];
+  // Tâches depuis Supabase
+  List<Map<String, dynamic>> _tasks = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadTasks();
+  }
+
+  Future<void> _loadTasks() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      
+      if (userId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final response = await supabase
+          .from('tasks')
+          .select()
+          .or('created_by.eq.$userId,assigned_to.eq.$userId')
+          .order('due_date', ascending: true);
+
+      setState(() {
+        _tasks = List<Map<String, dynamic>>.from(response).map((task) {
+          // Convertir le format Supabase vers le format local
+          return {
+            'id': task['id'],
+            'title': task['title'] ?? '',
+            'description': task['description'] ?? '',
+            'dueDate': task['due_date'] != null 
+                ? DateTime.parse(task['due_date']) 
+                : DateTime.now(),
+            'status': task['is_completed'] == true ? 'termine' : 'a_faire',
+            'assignedTo': 'Moi',
+            'assignedBy': 'Moi',
+          };
+        }).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur de chargement: $e'), backgroundColor: Colors.red),
+        );
+      }
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -74,6 +85,9 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
   }
 
   List<Map<String, dynamic>> _getTasksByStatus(String status) {
+    if (status == 'all') {
+      return _tasks;
+    }
     return _tasks.where((task) => task['status'] == status).toList();
   }
 
@@ -90,8 +104,8 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildTaskList('todo'),
-                _buildTaskList('en_cours'),
+                _buildTaskList('all'),
+                _buildTaskList('a_faire'),
                 _buildTaskList('termine'),
               ],
             ),
@@ -236,9 +250,9 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('À faire'),
+                const Text('Toutes'),
                 const SizedBox(width: 4),
-                _buildBadge(_getTasksByStatus('todo').length),
+                _buildBadge(_getTasksByStatus('all').length),
               ],
             ),
           ),
@@ -246,9 +260,9 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('En cours'),
+                const Text('À faire'),
                 const SizedBox(width: 4),
-                _buildBadge(_getTasksByStatus('en_cours').length),
+                _buildBadge(_getTasksByStatus('a_faire').length),
               ],
             ),
           ),
@@ -287,18 +301,25 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
   }
 
   Widget _buildTaskList(String status) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
     final tasks = _getTasksByStatus(status);
 
     if (tasks.isEmpty) {
       return _buildEmptyState(status);
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: tasks.length,
-      itemBuilder: (context, index) {
-        return _buildTaskCard(tasks[index]);
-      },
+    return RefreshIndicator(
+      onRefresh: _loadTasks,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: tasks.length,
+        itemBuilder: (context, index) {
+          return _buildTaskCard(tasks[index]);
+        },
+      ),
     );
   }
 
@@ -307,12 +328,12 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
     IconData icon;
 
     switch (status) {
-      case 'todo':
-        message = 'Aucune tâche à faire';
-        icon = Icons.check_circle_outline;
+      case 'all':
+        message = 'Aucune tâche';
+        icon = Icons.task_outlined;
         break;
-      case 'en_cours':
-        message = 'Aucune tâche en cours';
+      case 'a_faire':
+        message = 'Aucune tâche à faire';
         icon = Icons.hourglass_empty;
         break;
       case 'termine':
@@ -487,8 +508,8 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
 
   Widget _buildStatusChip(String status) {
     final statusConfig = {
-      'todo': {'label': 'À faire', 'color': Colors.grey},
-      'en_cours': {'label': 'En cours', 'color': Colors.blue},
+      'all': {'label': 'Toutes', 'color': Colors.grey},
+      'a_faire': {'label': 'À faire', 'color': Colors.blue},
       'termine': {'label': 'Terminé', 'color': Colors.green},
     };
 
@@ -530,30 +551,47 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
 
   String _getNextStatus(String currentStatus) {
     switch (currentStatus) {
-      case 'todo':
-        return 'en_cours';
-      case 'en_cours':
+      case 'a_faire':
         return 'termine';
       default:
-        return 'todo';
+        return 'a_faire';
     }
   }
 
-  void _updateTaskStatus(Map<String, dynamic> task, String newStatus) {
-    setState(() {
-      task['status'] = newStatus;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Tâche mise à jour : ${_getStatusLabel(newStatus)}')),
-    );
+  Future<void> _updateTaskStatus(Map<String, dynamic> task, String newStatus) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final isCompleted = newStatus == 'termine';
+      
+      await supabase.from('tasks').update({
+        'is_completed': isCompleted,
+      }).eq('id', task['id']);
+
+      setState(() {
+        task['status'] = newStatus;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tâche mise à jour : ${_getStatusLabel(newStatus)}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   String _getStatusLabel(String status) {
     switch (status) {
-      case 'todo':
+      case 'a_faire':
         return 'À faire';
-      case 'en_cours':
-        return 'En cours';
       case 'termine':
         return 'Terminé';
       default:
@@ -730,11 +768,9 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                       },
                       icon: const Icon(Icons.check),
                       label: Text(
-                        task['status'] == 'todo'
-                            ? 'Démarrer'
-                            : task['status'] == 'en_cours'
-                                ? 'Terminer'
-                                : 'Rouvrir',
+                        task['status'] == 'a_faire'
+                            ? 'Terminer'
+                            : 'Rouvrir',
                       ),
                     ),
                   ),
@@ -911,21 +947,41 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
     String description,
     String assignedTo,
     DateTime dueDate,
-  ) {
-    setState(() {
-      _tasks.add({
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
+  ) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      await supabase.from('tasks').insert({
         'title': title,
         'description': description,
-        'dueDate': dueDate,
-        'status': 'todo',
-        'assignedTo': assignedTo,
-        'assignedBy': 'Vous',
+        'due_date': dueDate.toIso8601String().split('T')[0],
+        'is_completed': false,
+        'created_by': userId,
+        'assigned_to': userId,
       });
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tâche créée')),
-    );
+
+      // Recharger les tâches depuis Supabase
+      await _loadTasks();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tâche créée avec succès !'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _showEditTaskDialog(Map<String, dynamic> task) {
@@ -1050,21 +1106,43 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
     );
   }
 
-  void _updateTask(
+  Future<void> _updateTask(
     Map<String, dynamic> task,
     String title,
     String description,
     String assignedTo,
     DateTime dueDate,
-  ) {
-    setState(() {
-      task['title'] = title;
-      task['description'] = description;
-      task['assignedTo'] = assignedTo;
-      task['dueDate'] = dueDate;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tâche modifiée')),
-    );
+  ) async {
+    try {
+      final supabase = Supabase.instance.client;
+      
+      await supabase.from('tasks').update({
+        'title': title,
+        'description': description,
+        'due_date': dueDate.toIso8601String().split('T')[0],
+      }).eq('id', task['id']);
+
+      setState(() {
+        task['title'] = title;
+        task['description'] = description;
+        task['assignedTo'] = assignedTo;
+        task['dueDate'] = dueDate;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tâche modifiée avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 }
