@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_conversation_page.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/profile_menu.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -243,6 +244,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           icon: const Icon(Icons.more_vert, color: Color(0xFF4A90A4)),
           onPressed: _showOptionsMenu,
         ),
+        const ProfileMenu(),
       ],
       bottom: TabBar(
         controller: _tabController,

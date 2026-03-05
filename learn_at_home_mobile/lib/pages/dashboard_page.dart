@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/app_header.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -110,25 +111,14 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        title: const Text(
-          'Tableau de bord',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: const Color(0xFF4A90A4),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              _loadDashboardData();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Données actualisées')),
-              );
-            },
-          ),
-        ],
+      appBar: AppHeader(
+        title: 'Tableau de bord',
+        onRefresh: () {
+          _loadDashboardData();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Données actualisées')),
+          );
+        },
       ),
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator())

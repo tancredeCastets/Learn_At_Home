@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/app_header.dart';
 
 enum TaskRole { eleve, tuteur }
 
@@ -95,7 +96,20 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: _buildAppBar(),
+      appBar: AppHeader(
+        title: 'Gestion des Tâches',
+        onRefresh: _loadTasks,
+        extraActions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list, color: Colors.white),
+            onPressed: _showFilterOptions,
+          ),
+          IconButton(
+            icon: const Icon(Icons.swap_horiz, color: Colors.white),
+            onPressed: _toggleRole,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           _buildRoleIndicator(),

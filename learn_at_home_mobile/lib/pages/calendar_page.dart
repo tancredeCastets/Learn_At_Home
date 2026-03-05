@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/app_header.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CalendarPage extends StatefulWidget {
@@ -90,7 +91,21 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: _buildAppBar(),
+      appBar: AppHeader(
+        title: 'Calendrier',
+        onRefresh: _loadEvents,
+        extraActions: [
+          IconButton(
+            icon: const Icon(Icons.today, color: Colors.white),
+            onPressed: () {
+              setState(() {
+                _selectedDate = DateTime.now();
+                _focusedMonth = DateTime.now();
+              });
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
