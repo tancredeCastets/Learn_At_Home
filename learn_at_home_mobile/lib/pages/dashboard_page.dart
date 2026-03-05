@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'chat_page.dart';
 import '../widgets/bottom_nav_bar.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -10,59 +11,102 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // Données simulées
-  final int _unreadMessages = 5;
+  bool _isLoading = true;
+  int _unreadMessages = 0;
   
-  final List<Map<String, dynamic>> _upcomingTasks = [
-    {
-      'title': 'Exercices de mathématiques',
-      'description': 'Faire les exercices 1 à 10 page 42',
-      'dueDate': DateTime.now().add(const Duration(days: 1)),
-      'status': 'todo',
-    },
-    {
-      'title': 'Révision chapitre 5',
-      'description': 'Relire et résumer le chapitre',
-      'dueDate': DateTime.now().add(const Duration(days: 2)),
-      'status': 'in_progress',
-    },
-    {
-      'title': 'Préparer exposé',
-      'description': 'Recherches et plan de l\'exposé',
-      'dueDate': DateTime.now().add(const Duration(days: 3)),
-      'status': 'todo',
-    },
-  ];
-
-  final List<Map<String, dynamic>> _upcomingEvents = [
-    {
-      'title': 'Cours de maths',
-      'description': 'Séance de soutien en mathématiques',
-      'date': DateTime.now().add(const Duration(hours: 2)),
-    },
-    {
-      'title': 'RDV bilan mensuel',
-      'description': 'Point sur la progression',
-      'date': DateTime.now().add(const Duration(days: 1, hours: 14)),
-    },
-    {
-      'title': 'Atelier lecture',
-      'description': 'Lecture et compréhension de texte',
-      'date': DateTime.now().add(const Duration(days: 2, hours: 10)),
-    },
-    {
-      'title': 'Cours de français',
-      'description': 'Grammaire et conjugaison',
-      'date': DateTime.now().add(const Duration(days: 3)),
-    },
-  ];
-
-  final Map<String, dynamic> _stats = {
-    'tasksCompleted': 12,
-    'tasksTotal': 18,
-    'hoursThisWeek': 8,
-    'sessionsThisMonth': 15,
+  List<Map<String, dynamic>> _upcomingTasks = [];
+  List<Map<String, dynamic>> _upcomingEvents = [];
+  Map<String, dynamic> _stats = {
+    'tasksCompleted': 0,
+    'tasksTotal': 0,
+    'hoursThisWeek': 0,
+    'sessionsThisMonth': 0,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      
+      if (userId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Charger les tâches
+      final tasksResponse = await supabase
+          .from('tasks')
+          .select()
+          .or('created_by.eq.$userId,assigned_to.eq.$userId')
+          .order('due_date', ascending: true)
+          .limit(5);
+
+      // Charger les événements
+      final eventsResponse = await supabase
+          .from('events')
+          .select()
+          .eq('created_by', userId)
+          .gte('start_datetime', DateTime.now().toIso8601String())
+          .order('start_datetime', ascending: true)
+          .limit(5);
+
+      // Calculer les stats
+      final allTasksResponse = await supabase
+          .from('tasks')
+          .select()
+          .or('created_by.eq.$userId,assigned_to.eq.$userId');
+
+      final allTasks = List<Map<String, dynamic>>.from(allTasksResponse);
+      final completedTasks = allTasks.where((t) => t['is_completed'] == true).length;
+
+      setState(() {
+        _upcomingTasks = List<Map<String, dynamic>>.from(tasksResponse).map((task) {
+          return {
+            'title': task['title'] ?? '',
+            'description': task['description'] ?? '',
+            'dueDate': task['due_date'] != null 
+                ? DateTime.parse(task['due_date']) 
+                : DateTime.now(),
+            'status': task['is_completed'] == true ? 'done' : 'todo',
+          };
+        }).toList();
+
+        _upcomingEvents = List<Map<String, dynamic>>.from(eventsResponse).map((event) {
+          return {
+            'title': event['title'] ?? '',
+            'description': event['description'] ?? '',
+            'date': event['start_datetime'] != null 
+                ? DateTime.parse(event['start_datetime']) 
+                : DateTime.now(),
+          };
+        }).toList();
+
+        _stats = {
+          'tasksCompleted': completedTasks,
+          'tasksTotal': allTasks.length,
+          'hoursThisWeek': 0,
+          'sessionsThisMonth': _upcomingEvents.length,
+        };
+
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur de chargement: $e'), backgroundColor: Colors.red),
+        );
+      }
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +124,7 @@ class _DashboardPageState extends State<DashboardPage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
+              _loadDashboardData();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Données actualisées')),
               );
@@ -87,16 +132,20 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Carte de bienvenue avec messages non lus
-            _buildWelcomeCard(),
-            const SizedBox(height: 20),
-            
-            // Statistiques rapides
+      body: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadDashboardData,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Carte de bienvenue avec messages non lus
+                    _buildWelcomeCard(),
+                    const SizedBox(height: 20),
+                    
+                    // Statistiques rapides
             _buildStatsRow(),
             const SizedBox(height: 24),
             
@@ -120,6 +169,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
+    ),
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 0),
     );
   }
@@ -318,6 +368,25 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildTasksList() {
+    if (_upcomingTasks.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.task_outlined, size: 40, color: Colors.grey[300]),
+              const SizedBox(height: 8),
+              Text('Aucune tâche', style: TextStyle(color: Colors.grey[500])),
+            ],
+          ),
+        ),
+      );
+    }
+    
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -410,6 +479,25 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildEventsList() {
+    if (_upcomingEvents.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.event_outlined, size: 40, color: Colors.grey[300]),
+              const SizedBox(height: 8),
+              Text('Aucun événement', style: TextStyle(color: Colors.grey[500])),
+            ],
+          ),
+        ),
+      );
+    }
+    
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
