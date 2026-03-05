@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -12,67 +13,73 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedMonth = DateTime.now();
   bool _isMonthView = true; // true = mois, false = semaine
+  bool _isLoading = true;
 
-  // Événements simulés
-  final Map<DateTime, List<Map<String, dynamic>>> _events = {};
+  // Événements depuis Supabase
+  Map<DateTime, List<Map<String, dynamic>>> _events = {};
 
   @override
   void initState() {
     super.initState();
-    _initEvents();
+    _loadEvents();
   }
 
-  void _initEvents() {
-    final now = DateTime.now();
+  Future<void> _loadEvents() async {
+    setState(() => _isLoading = true);
     
-    // Ajouter des événements de test
-    _events[DateTime(now.year, now.month, now.day)] = [
-      {
-        'title': 'Séance de soutien',
-        'description': 'Révision des exercices de mathématiques',
-        'startTime': '14:00',
-        'endTime': '15:30',
-      },
-      {
-        'title': 'Aide aux devoirs',
-        'description': 'Préparation du contrôle de français',
-        'startTime': '16:00',
-        'endTime': '17:00',
-      },
-    ];
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
 
-    _events[DateTime(now.year, now.month, now.day + 1)] = [
-      {
-        'title': 'RDV Bilan',
-        'description': 'Point mensuel avec le tuteur',
-        'startTime': '10:00',
-        'endTime': '11:00',
-      },
-    ];
+      if (userId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
 
-    _events[DateTime(now.year, now.month, now.day + 3)] = [
-      {
-        'title': 'Séance de physique',
-        'description': 'Chapitre sur l\'électricité',
-        'startTime': '09:00',
-        'endTime': '10:30',
-      },
-      {
-        'title': 'Atelier lecture',
-        'description': 'Lecture et compréhension de texte',
-        'startTime': '14:00',
-        'endTime': '15:00',
-      },
-    ];
+      final response = await supabase
+          .from('events')
+          .select()
+          .eq('created_by', userId)
+          .order('start_datetime', ascending: true);
 
-    _events[DateTime(now.year, now.month, now.day + 5)] = [
-      {
-        'title': 'Révision générale',
-        'description': 'Préparation aux examens de fin de semaine',
-        'startTime': '08:00',
-        'endTime': '12:00',
-      },
-    ];
+      // Convertir les données Supabase en Map par date
+      final Map<DateTime, List<Map<String, dynamic>>> eventsMap = {};
+      
+      for (final event in response) {
+        final startDateTime = DateTime.parse(event['start_datetime']);
+        final endDateTime = event['end_datetime'] != null 
+            ? DateTime.parse(event['end_datetime']) 
+            : startDateTime.add(const Duration(hours: 1));
+        
+        final key = DateTime(startDateTime.year, startDateTime.month, startDateTime.day);
+        
+        final eventData = {
+          'id': event['id'],
+          'title': event['title'] ?? '',
+          'description': event['description'] ?? '',
+          'startTime': '${startDateTime.hour.toString().padLeft(2, '0')}:${startDateTime.minute.toString().padLeft(2, '0')}',
+          'endTime': '${endDateTime.hour.toString().padLeft(2, '0')}:${endDateTime.minute.toString().padLeft(2, '0')}',
+        };
+        
+        if (eventsMap[key] == null) {
+          eventsMap[key] = [eventData];
+        } else {
+          eventsMap[key]!.add(eventData);
+        }
+      }
+
+      setState(() {
+        _events = eventsMap;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur de chargement: $e'), backgroundColor: Colors.red),
+        );
+      }
+      setState(() => _isLoading = false);
+    }
   }
 
   List<Map<String, dynamic>> _getEventsForDay(DateTime day) {
@@ -770,26 +777,45 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  void _addEvent(String title, String description, TimeOfDay start, TimeOfDay end) {
-    final key = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
-    final newEvent = {
-      'title': title,
-      'description': description,
-      'startTime': '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}',
-      'endTime': '${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}',
-    };
+  Future<void> _addEvent(String title, String description, TimeOfDay start, TimeOfDay end) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
 
-    setState(() {
-      if (_events[key] == null) {
-        _events[key] = [newEvent];
-      } else {
-        _events[key]!.add(newEvent);
+      final startDateTime = DateTime(
+        _selectedDate.year, _selectedDate.month, _selectedDate.day,
+        start.hour, start.minute,
+      );
+      final endDateTime = DateTime(
+        _selectedDate.year, _selectedDate.month, _selectedDate.day,
+        end.hour, end.minute,
+      );
+
+      await supabase.from('events').insert({
+        'title': title,
+        'description': description,
+        'start_datetime': startDateTime.toIso8601String(),
+        'end_datetime': endDateTime.toIso8601String(),
+        'created_by': userId,
+      });
+
+      await _loadEvents();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Événement ajouté avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Événement ajouté')),
-    );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   void _showEventOptions(Map<String, dynamic> event) {
@@ -834,14 +860,28 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  void _deleteEvent(Map<String, dynamic> event) {
-    final key = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
-    setState(() {
-      _events[key]?.remove(event);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Événement supprimé')),
-    );
+  Future<void> _deleteEvent(Map<String, dynamic> event) async {
+    try {
+      final supabase = Supabase.instance.client;
+      await supabase.from('events').delete().eq('id', event['id']);
+      
+      await _loadEvents();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Événement supprimé'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
