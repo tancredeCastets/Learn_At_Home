@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatConversationPage extends StatefulWidget {
+  final String conversationId;
   final String contactName;
   final String contactAvatar;
 
   const ChatConversationPage({
     super.key,
+    required this.conversationId,
     required this.contactName,
     required this.contactAvatar,
   });
@@ -18,82 +21,93 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isTyping = false;
+  bool _isLoading = true;
 
-  // Messages simulés
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'id': '1',
-      'content': 'Salut ! Comment ça va ?',
-      'isMe': false,
-      'sent_at': '14:00',
-      'read_at': '14:01',
-    },
-    {
-      'id': '2',
-      'content': 'Très bien merci ! Et toi ?',
-      'isMe': true,
-      'sent_at': '14:02',
-      'read_at': '14:02',
-    },
-    {
-      'id': '3',
-      'content': 'Ça va bien ! Tu as réussi à faire l\'exercice de maths ?',
-      'isMe': false,
-      'sent_at': '14:05',
-      'read_at': '14:05',
-    },
-    {
-      'id': '4',
-      'content': 'Oui, j\'ai eu un peu de mal avec la question 3 mais j\'ai fini par comprendre.',
-      'isMe': true,
-      'sent_at': '14:08',
-      'read_at': '14:08',
-    },
-    {
-      'id': '5',
-      'content': 'Super ! Si tu veux, on peut revoir ça ensemble demain.',
-      'isMe': false,
-      'sent_at': '14:10',
-      'read_at': '14:10',
-    },
-    {
-      'id': '6',
-      'content': 'Ce serait génial ! On se retrouve à quelle heure ?',
-      'isMe': true,
-      'sent_at': '14:12',
-      'read_at': '14:12',
-    },
-    {
-      'id': '7',
-      'content': 'D\'accord, on se voit demain pour le cours de maths !',
-      'isMe': false,
-      'sent_at': '14:30',
-      'read_at': '14:30',
-    },
-  ];
+  // Messages depuis Supabase
+  List<Map<String, dynamic>> _messages = [];
+  RealtimeChannel? _messagesSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMessages();
+    _subscribeToMessages();
+  }
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _messagesSubscription?.unsubscribe();
     super.dispose();
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  Future<void> _loadMessages() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
 
-    setState(() {
-      _messages.add({
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'content': _messageController.text.trim(),
-        'isMe': true,
-        'sent_at': _formatTime(DateTime.now()),
-        'read_at': null,
+      final response = await supabase
+          .from('messages')
+          .select()
+          .eq('conversation_id', widget.conversationId)
+          .order('sent_at', ascending: true);
+
+      setState(() {
+        _messages = List<Map<String, dynamic>>.from(response).map((msg) {
+          return {
+            'id': msg['id'],
+            'content': msg['content'] ?? '',
+            'isMe': msg['sender_id'] == userId,
+            'sent_at': _formatTime(DateTime.parse(msg['sent_at'])),
+            'read_at': msg['read_at'] != null ? _formatTime(DateTime.parse(msg['read_at'])) : null,
+          };
+        }).toList();
+        _isLoading = false;
       });
-      _messageController.clear();
-    });
 
-    // Scroll to bottom
+      _scrollToBottom();
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _subscribeToMessages() {
+    final supabase = Supabase.instance.client;
+    
+    _messagesSubscription = supabase
+        .channel('messages:${widget.conversationId}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'messages',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'conversation_id',
+            value: widget.conversationId,
+          ),
+          callback: (payload) {
+            final msg = payload.newRecord;
+            final userId = supabase.auth.currentUser?.id;
+            
+            setState(() {
+              _messages.add({
+                'id': msg['id'],
+                'content': msg['content'] ?? '',
+                'isMe': msg['sender_id'] == userId,
+                'sent_at': _formatTime(DateTime.parse(msg['sent_at'])),
+                'read_at': null,
+              });
+            });
+            _scrollToBottom();
+          },
+        )
+        .subscribe();
+  }
+
+  void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -103,38 +117,39 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         );
       }
     });
-
-    // Simuler une réponse
-    _simulateReply();
   }
 
-  void _simulateReply() {
-    setState(() => _isTyping = true);
+  Future<void> _sendMessage() async {
+    if (_messageController.text.trim().isEmpty) return;
 
-    Future.delayed(const Duration(seconds: 2), () {
+    final content = _messageController.text.trim();
+    _messageController.clear();
+
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      // Insérer le message dans Supabase
+      await supabase.from('messages').insert({
+        'conversation_id': widget.conversationId,
+        'sender_id': userId,
+        'content': content,
+        'sent_at': DateTime.now().toIso8601String(),
+      });
+
+      // Mettre à jour le dernier message de la conversation
+      await supabase.from('conversations').update({
+        'last_message': content,
+        'last_message_at': DateTime.now().toIso8601String(),
+      }).eq('id', widget.conversationId);
+
+    } catch (e) {
       if (mounted) {
-        setState(() {
-          _isTyping = false;
-          _messages.add({
-            'id': DateTime.now().millisecondsSinceEpoch.toString(),
-            'content': 'D\'accord, c\'est noté ! 👍',
-            'isMe': false,
-            'sent_at': _formatTime(DateTime.now()),
-            'read_at': _formatTime(DateTime.now()),
-          });
-        });
-
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (_scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
       }
-    });
+    }
   }
 
   String _formatTime(DateTime time) {
@@ -148,7 +163,11 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       appBar: _buildAppBar(),
       body: Column(
         children: [
-          Expanded(child: _buildMessagesList()),
+          Expanded(
+            child: _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : _buildMessagesList(),
+          ),
           if (_isTyping) _buildTypingIndicator(),
           _buildMessageInput(),
         ],

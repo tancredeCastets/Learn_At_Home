@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_conversation_page.dart';
 import '../widgets/bottom_nav_bar.dart';
 
@@ -13,61 +14,13 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
   late TabController _tabController;
   final _searchController = TextEditingController();
   bool _isSearching = false;
+  bool _isLoading = true;
 
-  // Données simulées des conversations
-  final List<Map<String, dynamic>> _conversations = [
-    {
-      'id': '1',
-      'name': 'Marie Dupont',
-      'avatar': 'M',
-      'lastMessage': 'D\'accord, on se voit demain pour le cours de maths !',
-      'time': '14:30',
-      'unread': 2,
-    },
-    {
-      'id': '2',
-      'name': 'Pierre Martin',
-      'avatar': 'P',
-      'lastMessage': 'As-tu compris l\'exercice 3 ?',
-      'time': '12:15',
-      'unread': 0,
-    },
-    {
-      'id': '3',
-      'name': 'Sophie Bernard',
-      'avatar': 'S',
-      'lastMessage': 'Merci pour ton aide !',
-      'time': 'Hier',
-      'unread': 0,
-    },
-    {
-      'id': '4',
-      'name': 'Lucas Petit',
-      'avatar': 'L',
-      'lastMessage': 'Je t\'envoie les documents ce soir.',
-      'time': 'Hier',
-      'unread': 1,
-    },
-    {
-      'id': '5',
-      'name': 'Emma Leroy',
-      'avatar': 'E',
-      'lastMessage': 'À quelle heure le prochain cours ?',
-      'time': 'Lun',
-      'unread': 0,
-    },
-  ];
+  // Conversations depuis Supabase
+  List<Map<String, dynamic>> _conversations = [];
 
-  // Données simulées des contacts
-  List<Map<String, dynamic>> _contacts = [
-    {'name': 'Marie Dupont', 'avatar': 'M'},
-    {'name': 'Pierre Martin', 'avatar': 'P'},
-    {'name': 'Sophie Bernard', 'avatar': 'S'},
-    {'name': 'Lucas Petit', 'avatar': 'L'},
-    {'name': 'Emma Leroy', 'avatar': 'E'},
-    {'name': 'Thomas Moreau', 'avatar': 'T'},
-    {'name': 'Julie Garcia', 'avatar': 'J'},
-  ];
+  // Contacts depuis Supabase
+  List<Map<String, dynamic>> _contacts = [];
 
   @override
   void initState() {
@@ -76,6 +29,146 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     _tabController.addListener(() {
       setState(() {});
     });
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await Future.wait([_loadConversations(), _loadContacts()]);
+  }
+
+  Future<void> _loadConversations() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      if (userId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Charger les conversations où l'utilisateur est participant
+      final response = await supabase
+          .from('conversations')
+          .select('id, last_message, last_message_at, participant_1, participant_2')
+          .or('participant_1.eq.$userId,participant_2.eq.$userId')
+          .order('last_message_at', ascending: false);
+
+      // Charger les profils des autres participants
+      final List<Map<String, dynamic>> conversations = [];
+      
+      for (final conv in response) {
+        final isParticipant1 = conv['participant_1'] == userId;
+        final otherUserId = isParticipant1 ? conv['participant_2'] : conv['participant_1'];
+        
+        String name = 'Utilisateur';
+        
+        if (otherUserId != null) {
+          final profileResponse = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', otherUserId)
+              .maybeSingle();
+          
+          if (profileResponse != null) {
+            name = '${profileResponse['first_name'] ?? ''} ${profileResponse['last_name'] ?? ''}'.trim();
+          }
+        }
+        
+        conversations.add({
+          'id': conv['id'],
+          'name': name.isNotEmpty ? name : 'Utilisateur',
+          'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
+          'lastMessage': conv['last_message'] ?? '',
+          'time': _formatMessageTime(conv['last_message_at']),
+          'unread': 0,
+          'other_user_id': otherUserId,
+        });
+      }
+
+      setState(() {
+        _conversations = conversations;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadContacts() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      if (userId == null) return;
+
+      // Charger les contacts depuis la table contacts
+      final response = await supabase
+          .from('contacts')
+          .select('id, contact_id')
+          .eq('user_id', userId);
+
+      final List<Map<String, dynamic>> contacts = [];
+      
+      for (final contact in response) {
+        final contactId = contact['contact_id'];
+        
+        String name = 'Contact';
+        String email = '';
+        
+        if (contactId != null) {
+          final profileResponse = await supabase
+              .from('profiles')
+              .select('first_name, last_name, email')
+              .eq('id', contactId)
+              .maybeSingle();
+          
+          if (profileResponse != null) {
+            name = '${profileResponse['first_name'] ?? ''} ${profileResponse['last_name'] ?? ''}'.trim();
+            email = profileResponse['email'] ?? '';
+          }
+        }
+        
+        contacts.add({
+          'id': contact['id'],
+          'contact_id': contactId,
+          'name': name.isNotEmpty ? name : 'Contact',
+          'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
+          'email': email,
+        });
+      }
+
+      setState(() {
+        _contacts = contacts;
+      });
+    } catch (e) {
+      // Silently fail for contacts
+    }
+  }
+
+  String _formatMessageTime(String? dateStr) {
+    if (dateStr == null) return '';
+    
+    final date = DateTime.parse(dateStr);
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    
+    if (diff.inDays == 0) {
+      return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (diff.inDays == 1) {
+      return 'Hier';
+    } else if (diff.inDays < 7) {
+      final jours = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+      return jours[date.weekday % 7];
+    } else {
+      return '${date.day}/${date.month}';
+    }
   }
 
   @override
@@ -410,6 +503,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       context,
       MaterialPageRoute(
         builder: (context) => ChatConversationPage(
+          conversationId: conversation['id'],
           contactName: conversation['name'],
           contactAvatar: conversation['avatar'],
         ),
@@ -417,16 +511,52 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     );
   }
 
-  void _startConversationWithContact(Map<String, dynamic> contact) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChatConversationPage(
-          contactName: contact['name'],
-          contactAvatar: contact['avatar'],
-        ),
-      ),
-    );
+  Future<void> _startConversationWithContact(Map<String, dynamic> contact) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      final contactId = contact['contact_id'];
+
+      // Vérifier si une conversation existe déjà
+      final existing = await supabase
+          .from('conversations')
+          .select('id')
+          .or('and(participant_1.eq.$userId,participant_2.eq.$contactId),and(participant_1.eq.$contactId,participant_2.eq.$userId)')
+          .maybeSingle();
+
+      String conversationId;
+
+      if (existing != null) {
+        conversationId = existing['id'];
+      } else {
+        // Créer une nouvelle conversation
+        final response = await supabase.from('conversations').insert({
+          'participant_1': userId,
+          'participant_2': contactId,
+        }).select('id').single();
+        
+        conversationId = response['id'];
+      }
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatConversationPage(
+              conversationId: conversationId,
+              contactName: contact['name'],
+              contactAvatar: contact['avatar'],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Future<bool> _confirmDeleteConversation(String name) async {
@@ -591,7 +721,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     );
   }
 
-  void _deleteContact(Map<String, dynamic> contact) async {
+  Future<void> _deleteContact(Map<String, dynamic> contact) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -612,19 +742,32 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     );
 
     if (confirm == true) {
-      setState(() {
-        _contacts.removeWhere((c) => c['name'] == contact['name']);
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${contact['name']} supprimé de vos contacts')),
-        );
+      try {
+        final supabase = Supabase.instance.client;
+        await supabase.from('contacts').delete().eq('id', contact['id']);
+        
+        await _loadContacts();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${contact['name']} supprimé de vos contacts'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          );
+        }
       }
     }
   }
 
   void _showAddContactDialog() {
-    final nameController = TextEditingController();
+    final emailController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -654,11 +797,12 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               ),
               const SizedBox(height: 20),
               TextField(
-                controller: nameController,
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'Nom du contact',
-                  hintText: 'Ex: Jean Martin',
-                  prefixIcon: const Icon(Icons.person_outline),
+                  labelText: 'Email du contact',
+                  hintText: 'Ex: jean@example.com',
+                  prefixIcon: const Icon(Icons.email_outlined),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -669,8 +813,8 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    if (nameController.text.isNotEmpty) {
-                      _addContact(nameController.text);
+                    if (emailController.text.isNotEmpty) {
+                      _addContactByEmail(emailController.text);
                       Navigator.pop(context);
                     }
                   },
@@ -694,15 +838,53 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     );
   }
 
-  void _addContact(String name) {
-    setState(() {
-      _contacts.add({
-        'name': name,
-        'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
+  Future<void> _addContactByEmail(String email) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      // Trouver l'utilisateur par email
+      final response = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .eq('email', email)
+          .maybeSingle();
+
+      if (response == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Aucun utilisateur trouvé avec cet email'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Ajouter le contact
+      await supabase.from('contacts').insert({
+        'user_id': userId,
+        'contact_id': response['id'],
       });
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$name ajouté à vos contacts')),
-    );
+
+      await _loadContacts();
+
+      if (mounted) {
+        final name = '${response['first_name'] ?? ''} ${response['last_name'] ?? ''}'.trim();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$name ajouté à vos contacts'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 }

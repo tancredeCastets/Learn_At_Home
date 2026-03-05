@@ -13,7 +13,7 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedMonth = DateTime.now();
   bool _isMonthView = true; // true = mois, false = semaine
-  bool _isLoading = true;
+  bool _isLoading = true; 
 
   // Événements depuis Supabase
   Map<DateTime, List<Map<String, dynamic>>> _events = {};

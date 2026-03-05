@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'chat_page.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,7 +11,6 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   bool _isLoading = true;
-  int _unreadMessages = 0;
   
   List<Map<String, dynamic>> _upcomingTasks = [];
   List<Map<String, dynamic>> _upcomingEvents = [];
@@ -141,9 +139,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Carte de bienvenue avec messages non lus
-                    _buildWelcomeCard(),
-                    const SizedBox(height: 20),
                     
                     // Statistiques rapides
             _buildStatsRow(),
@@ -161,11 +156,6 @@ class _DashboardPageState extends State<DashboardPage> {
             _buildEventsList(),
             const SizedBox(height: 24),
             
-            // Progression
-            _buildSectionTitle('Ma progression', Icons.trending_up),
-            const SizedBox(height: 12),
-            _buildProgressCard(),
-            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -174,128 +164,26 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildWelcomeCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF4A90A4), Color(0xFF357A8C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF4A90A4).withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Bonjour ! 👋',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Vous avez $_unreadMessages messages non lus',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ChatPage()),
-                    );
-                  },
-                  icon: const Icon(Icons.mail_outline, size: 18),
-                  label: const Text('Voir les messages'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF4A90A4),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Stack(
-              children: [
-                const Icon(
-                  Icons.mail,
-                  size: 40,
-                  color: Colors.white,
-                ),
-                if (_unreadMessages > 0)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '$_unreadMessages',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildStatsRow() {
     return Row(
       children: [
+        
+        
+        Expanded(
+          child: _buildStatCard(
+            'Messages non lus',
+            '${_stats['unreadMessages']}',
+            Icons.message,
+            Colors.blue,
+          ),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
             'Tâches',
             '${_stats['tasksCompleted']}/${_stats['tasksTotal']}',
             Icons.check_circle_outline,
             Colors.green,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            'Heures/sem',
-            '${_stats['hoursThisWeek']}h',
-            Icons.access_time,
-            Colors.blue,
           ),
         ),
         const SizedBox(width: 12),
@@ -592,90 +480,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildProgressCard() {
-    final completionRate = _stats['tasksCompleted'] / _stats['tasksTotal'];
-    
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Tâches complétées',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-              Text(
-                '${(completionRate * 100).toInt()}%',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF4A90A4),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: completionRate,
-              minHeight: 10,
-              backgroundColor: Colors.grey[200],
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4A90A4)),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildProgressStat('À faire', _stats['tasksTotal'] - _stats['tasksCompleted'], Colors.orange),
-              _buildProgressStat('Terminées', _stats['tasksCompleted'], Colors.green),
-              _buildProgressStat('Total', _stats['tasksTotal'], const Color(0xFF4A90A4)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressStat(String label, int value, Color color) {
-    return Column(
-      children: [
-        Text(
-          '$value',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
-        ),
-      ],
-    );
-  }
 
   String _formatDueDate(DateTime date) {
     final now = DateTime.now();
