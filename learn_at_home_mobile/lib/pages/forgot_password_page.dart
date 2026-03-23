@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -25,13 +26,43 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         _isLoading = true;
       });
 
-      // Simuler l'envoi d'email
-      await Future.delayed(const Duration(seconds: 2));
+      try {
+        // Envoi de l'email de réinitialisation via Supabase
+        await Supabase.instance.client.auth.resetPasswordForEmail(
+          _emailController.text.trim(),
+        );
 
-      setState(() {
-        _isLoading = false;
-        _emailSent = true;
-      });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _emailSent = true;
+          });
+        }
+      } on AuthException catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Une erreur est survenue'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -130,21 +161,59 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         ),
         const SizedBox(height: 16),
         TextButton(
-          onPressed: () {
-            setState(() {
-              _emailSent = false;
-            });
-          },
-          child: const Text(
-            'Vous n\'avez pas reçu l\'email ? Renvoyer',
-            style: TextStyle(
-              color: Color(0xFF4A90A4),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          onPressed: _isLoading ? null : _handleResendEmail,
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text(
+                  'Vous n\'avez pas reçu l\'email ? Renvoyer',
+                  style: TextStyle(
+                    color: Color(0xFF4A90A4),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
         ),
       ],
     );
+  }
+
+  Future<void> _handleResendEmail() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(
+        _emailController.text.trim(),
+      );
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email renvoyé avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de l\'envoi'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildHeader() {
