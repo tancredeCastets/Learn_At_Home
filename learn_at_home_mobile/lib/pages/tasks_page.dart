@@ -14,15 +14,11 @@ class TasksPage extends StatefulWidget {
 
 class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  TaskRole _currentRole = TaskRole.tuteur; // Simuler le rôle actuel
+  TaskRole _currentRole = TaskRole.eleve; // Sera chargé depuis le profil
   bool _isLoading = true;
 
-  // Élèves du tuteur (simulés)
-  final List<Map<String, dynamic>> _students = [
-    {'id': '1', 'name': 'Pierre Martin', 'avatar': 'P'},
-    {'id': '2', 'name': 'Emma Leroy', 'avatar': 'E'},
-    {'id': '3', 'name': 'Lucas Petit', 'avatar': 'L'},
-  ];
+  // Élèves du tuteur (chargés depuis Supabase)
+  List<Map<String, dynamic>> _students = [];
 
   // Tâches depuis Supabase
   List<Map<String, dynamic>> _tasks = [];
@@ -31,7 +27,69 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadTasks();
+    _loadUserRoleAndData();
+  }
+
+  Future<void> _loadUserRoleAndData() async {
+    await _loadUserRole();
+    await _loadTasks();
+    if (_currentRole == TaskRole.tuteur) {
+      await _loadStudents();
+    }
+  }
+
+  Future<void> _loadUserRole() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      if (userId == null) return;
+
+      final response = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+
+      setState(() {
+        _currentRole = response['role'] == 'volunteer' 
+            ? TaskRole.tuteur 
+            : TaskRole.eleve;
+      });
+    } catch (e) {
+      // Par défaut: élève
+      setState(() => _currentRole = TaskRole.eleve);
+    }
+  }
+
+  Future<void> _loadStudents() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      if (userId == null) return;
+
+      // Charger les élèves (conversations existantes avec role='student')
+      final response = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .eq('role', 'student');
+
+      setState(() {
+        _students = List<Map<String, dynamic>>.from(response).map((s) {
+          final firstName = s['first_name'] ?? '';
+          final lastName = s['last_name'] ?? '';
+          final name = '$firstName $lastName'.trim();
+          return {
+            'id': s['id'],
+            'name': name.isNotEmpty ? name : 'Sans nom',
+            'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
+          };
+        }).toList();
+      });
+    } catch (e) {
+      // Garder liste vide en cas d'erreur
+    }
   }
 
   Future<void> _loadTasks() async {
@@ -46,15 +104,54 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
         return;
       }
 
+      // Charger les tâches
       final response = await supabase
           .from('tasks')
           .select()
           .or('created_by.eq.$userId,assigned_to.eq.$userId')
           .order('due_date', ascending: true);
 
+      // Collecter les IDs des utilisateurs à charger
+      final userIds = <String>{};
+      for (final task in response) {
+        if (task['assigned_to'] != null) userIds.add(task['assigned_to']);
+        if (task['created_by'] != null) userIds.add(task['created_by']);
+      }
+
+      // Charger les profils des utilisateurs concernés
+      Map<String, Map<String, dynamic>> profiles = {};
+      if (userIds.isNotEmpty) {
+        final profilesResponse = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name')
+            .inFilter('id', userIds.toList());
+        
+        for (final profile in profilesResponse) {
+          profiles[profile['id']] = profile;
+        }
+      }
+
       setState(() {
         _tasks = List<Map<String, dynamic>>.from(response).map((task) {
-          // Convertir le format Supabase vers le format local
+          final assigneeProfile = profiles[task['assigned_to']];
+          final creatorProfile = profiles[task['created_by']];
+          
+          String assignedToName = 'Moi';
+          if (task['assigned_to'] != userId && assigneeProfile != null) {
+            final firstName = assigneeProfile['first_name'] ?? '';
+            final lastName = assigneeProfile['last_name'] ?? '';
+            assignedToName = '$firstName $lastName'.trim();
+            if (assignedToName.isEmpty) assignedToName = 'Utilisateur';
+          }
+
+          String assignedByName = 'Moi';
+          if (task['created_by'] != userId && creatorProfile != null) {
+            final firstName = creatorProfile['first_name'] ?? '';
+            final lastName = creatorProfile['last_name'] ?? '';
+            assignedByName = '$firstName $lastName'.trim();
+            if (assignedByName.isEmpty) assignedByName = 'Utilisateur';
+          }
+
           return {
             'id': task['id'],
             'title': task['title'] ?? '',
@@ -63,8 +160,8 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                 ? DateTime.parse(task['due_date']) 
                 : DateTime.now(),
             'status': task['is_completed'] == true ? 'termine' : 'a_faire',
-            'assignedTo': 'Moi',
-            'assignedBy': 'Moi',
+            'assignedTo': assignedToName,
+            'assignedBy': assignedByName,
           };
         }).toList();
         _isLoading = false;
@@ -104,15 +201,10 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
             icon: const Icon(Icons.filter_list, color: Colors.white),
             onPressed: _showFilterOptions,
           ),
-          IconButton(
-            icon: const Icon(Icons.swap_horiz, color: Colors.white),
-            onPressed: _toggleRole,
-          ),
         ],
       ),
       body: Column(
         children: [
-          _buildRoleIndicator(),
           _buildTabBar(),
           Expanded(
             child: TabBarView(
@@ -151,10 +243,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
         IconButton(
           icon: const Icon(Icons.filter_list, color: Color(0xFF4A90A4)),
           onPressed: _showFilterOptions,
-        ),
-        IconButton(
-          icon: const Icon(Icons.swap_horiz, color: Color(0xFF4A90A4)),
-          onPressed: _toggleRole,
         ),
       ],
     );
@@ -636,21 +724,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
         false;
   }
 
-  void _toggleRole() {
-    setState(() {
-      _currentRole = _currentRole == TaskRole.tuteur ? TaskRole.eleve : TaskRole.tuteur;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _currentRole == TaskRole.tuteur
-              ? 'Mode Tuteur activé'
-              : 'Mode Élève activé',
-        ),
-      ),
-    );
-  }
-
   void _showFilterOptions() {
     showModalBottomSheet(
       context: context,
@@ -882,7 +955,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (_currentRole == TaskRole.tuteur)
+                if (_currentRole == TaskRole.tuteur && _students.isNotEmpty)
                   DropdownButtonFormField<String>(
                     value: selectedStudent,
                     decoration: InputDecoration(
@@ -893,7 +966,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                     ),
                     items: _students
                         .map((s) => DropdownMenuItem(
-                              value: s['name'] as String,
+                              value: s['id'] as String,
                               child: Text(s['name'] as String),
                             ))
                         .toList(),
@@ -925,13 +998,15 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                   child: ElevatedButton(
                     onPressed: () {
                       if (titleController.text.isNotEmpty) {
-                        final assignee = _currentRole == TaskRole.tuteur 
-                            ? (selectedStudent ?? 'Non assigné')
-                            : 'Moi-même';
+                        // Pour élève: toujours assigné à soi-même
+                        // Pour tuteur: assigné à l'élève sélectionné (ou soi-même si aucun)
+                        final assigneeId = _currentRole == TaskRole.tuteur 
+                            ? selectedStudent 
+                            : null; // null = soi-même
                         _addTask(
                           titleController.text,
                           descriptionController.text,
-                          assignee,
+                          assigneeId,
                           selectedDate,
                         );
                         Navigator.pop(context);
@@ -960,12 +1035,17 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
   void _addTask(
     String title,
     String description,
-    String assignedTo,
+    String? assignedToId,
     DateTime dueDate,
   ) async {
     try {
       final supabase = Supabase.instance.client;
       final userId = supabase.auth.currentUser?.id;
+
+      // Si assignedToId est null ou vide, assigner à soi-même
+      final targetUserId = (assignedToId != null && assignedToId.isNotEmpty) 
+          ? assignedToId 
+          : userId;
 
       await supabase.from('tasks').insert({
         'title': title,
@@ -973,7 +1053,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
         'due_date': dueDate.toIso8601String().split('T')[0],
         'is_completed': false,
         'created_by': userId,
-        'assigned_to': userId,
+        'assigned_to': targetUserId,
       });
 
       // Recharger les tâches depuis Supabase
