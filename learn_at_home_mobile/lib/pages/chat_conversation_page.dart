@@ -62,7 +62,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             'content': msg['content'] ?? '',
             'isMe': msg['sender_id'] == userId,
             'sent_at': _formatTime(DateTime.parse(msg['sent_at'])),
-            'read_at': msg['read_at'] != null ? _formatTime(DateTime.parse(msg['read_at'])) : null,
+            'is_read': msg['is_read'] == true || msg['is_read'] == 'true',
           };
         }).toList();
         _isLoading = false;
@@ -92,13 +92,16 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             final msg = payload.newRecord;
             final userId = supabase.auth.currentUser?.id;
             
+            // Ne pas ajouter si c'est mon propre message (déjà ajouté en optimistic)
+            if (msg['sender_id'] == userId) return;
+            
             setState(() {
               _messages.add({
                 'id': msg['id'],
                 'content': msg['content'] ?? '',
-                'isMe': msg['sender_id'] == userId,
+                'isMe': false,
                 'sent_at': _formatTime(DateTime.parse(msg['sent_at'])),
-                'read_at': null,
+                'is_read': false,
               });
             });
             _scrollToBottom();
@@ -125,25 +128,38 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     final content = _messageController.text.trim();
     _messageController.clear();
 
-    try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser?.id;
+    final now = DateTime.now();
 
+    // Ajouter le message localement immédiatement (optimistic update)
+    final tempId = 'temp_${now.millisecondsSinceEpoch}';
+    setState(() {
+      _messages.add({
+        'id': tempId,
+        'content': content,
+        'isMe': true,
+        'sent_at': _formatTime(now),
+        'is_read': false,
+      });
+    });
+    _scrollToBottom();
+
+    try {
       // Insérer le message dans Supabase
       await supabase.from('messages').insert({
         'conversation_id': widget.conversationId,
         'sender_id': userId,
         'content': content,
-        'sent_at': DateTime.now().toIso8601String(),
+        'is_read': false,
+        'sent_at': now.toIso8601String(),
       });
 
-      // Mettre à jour le dernier message de la conversation
-      await supabase.from('conversations').update({
-        'last_message': content,
-        'last_message_at': DateTime.now().toIso8601String(),
-      }).eq('id', widget.conversationId);
-
     } catch (e) {
+      // En cas d'erreur, retirer le message temporaire
+      setState(() {
+        _messages.removeWhere((m) => m['id'] == tempId);
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
@@ -322,7 +338,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                       if (isMe) ...[
                         const SizedBox(width: 4),
                         Icon(
-                          message['read_at'] != null
+                          message['is_read'] == true
                               ? Icons.done_all
                               : Icons.done,
                           size: 14,

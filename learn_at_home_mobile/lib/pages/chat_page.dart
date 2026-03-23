@@ -49,23 +49,30 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         return;
       }
 
-      // Charger les conversations où l'utilisateur est participant
-      final response = await supabase
-          .from('conversations')
-          .select('id, last_message, last_message_at, participant_1, participant_2')
-          .or('participant_1.eq.$userId,participant_2.eq.$userId')
-          .order('last_message_at', ascending: false);
+      // Trouver les conversations où l'utilisateur est participant
+      final myParticipations = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', userId);
 
-      // Charger les profils des autres participants
       final List<Map<String, dynamic>> conversations = [];
       
-      for (final conv in response) {
-        final isParticipant1 = conv['participant_1'] == userId;
-        final otherUserId = isParticipant1 ? conv['participant_2'] : conv['participant_1'];
+      for (final participation in myParticipations) {
+        final conversationId = participation['conversation_id'];
+        
+        // Trouver l'autre participant
+        final otherParticipant = await supabase
+            .from('conversation_participants')
+            .select('user_id')
+            .eq('conversation_id', conversationId)
+            .neq('user_id', userId)
+            .maybeSingle();
         
         String name = 'Utilisateur';
+        String otherUserId = '';
         
-        if (otherUserId != null) {
+        if (otherParticipant != null) {
+          otherUserId = otherParticipant['user_id'];
           final profileResponse = await supabase
               .from('profiles')
               .select('first_name, last_name')
@@ -77,16 +84,41 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           }
         }
         
+        // Récupérer le dernier message
+        final lastMessage = await supabase
+            .from('messages')
+            .select('content, sent_at')
+            .eq('conversation_id', conversationId)
+            .order('sent_at', ascending: false)
+            .limit(1)
+            .maybeSingle();
+        
+        // Compter les messages non lus
+        final unreadCount = await supabase
+            .from('messages')
+            .select('id')
+            .eq('conversation_id', conversationId)
+            .neq('sender_id', userId)
+            .eq('is_read', false);
+        
         conversations.add({
-          'id': conv['id'],
+          'id': conversationId,
           'name': name.isNotEmpty ? name : 'Utilisateur',
           'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
-          'lastMessage': conv['last_message'] ?? '',
-          'time': _formatMessageTime(conv['last_message_at']),
-          'unread': 0,
+          'lastMessage': lastMessage?['content'] ?? '',
+          'time': _formatMessageTime(lastMessage?['sent_at']),
+          'unread': (unreadCount as List).length,
           'other_user_id': otherUserId,
         });
       }
+      
+      // Trier par dernier message
+      conversations.sort((a, b) {
+        if (a['time'] == '' && b['time'] == '') return 0;
+        if (a['time'] == '') return 1;
+        if (b['time'] == '') return -1;
+        return b['time'].compareTo(a['time']);
+      });
 
       setState(() {
         _conversations = conversations;
@@ -510,7 +542,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           contactAvatar: conversation['avatar'],
         ),
       ),
-    );
+    ).then((_) => _loadConversations());
   }
 
   Future<void> _startConversationWithContact(Map<String, dynamic> contact) async {
@@ -519,25 +551,45 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       final userId = supabase.auth.currentUser?.id;
       final contactId = contact['contact_id'];
 
-      // Vérifier si une conversation existe déjà
-      final existing = await supabase
-          .from('conversations')
-          .select('id')
-          .or('and(participant_1.eq.$userId,participant_2.eq.$contactId),and(participant_1.eq.$contactId,participant_2.eq.$userId)')
-          .maybeSingle();
+      // Trouver les conversations où je suis participant
+      final myConversations = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', userId as Object);
 
-      String conversationId;
-
-      if (existing != null) {
-        conversationId = existing['id'];
-      } else {
-        // Créer une nouvelle conversation
-        final response = await supabase.from('conversations').insert({
-          'participant_1': userId,
-          'participant_2': contactId,
-        }).select('id').single();
+      String? conversationId;
+      
+      // Vérifier si une conversation existe déjà avec ce contact
+      for (final conv in myConversations) {
+        final convId = conv['conversation_id'];
+        final otherParticipant = await supabase
+            .from('conversation_participants')
+            .select('user_id')
+            .eq('conversation_id', convId)
+            .eq('user_id', contactId)
+            .maybeSingle();
         
-        conversationId = response['id'];
+        if (otherParticipant != null) {
+          conversationId = convId;
+          break;
+        }
+      }
+
+      if (conversationId == null) {
+        // Créer une nouvelle conversation
+        final newConv = await supabase
+            .from('conversations')
+            .insert({'created_at': DateTime.now().toIso8601String()})
+            .select('id')
+            .single();
+        
+        conversationId = newConv['id'];
+        
+        // Ajouter les deux participants
+        await supabase.from('conversation_participants').insert([
+          {'conversation_id': conversationId, 'user_id': userId},
+          {'conversation_id': conversationId, 'user_id': contactId},
+        ]);
       }
 
       if (mounted) {
@@ -545,12 +597,12 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           context,
           MaterialPageRoute(
             builder: (context) => ChatConversationPage(
-              conversationId: conversationId,
+              conversationId: conversationId!,
               contactName: contact['name'],
               contactAvatar: contact['avatar'],
             ),
           ),
-        );
+        ).then((_) => _loadConversations());
       }
     } catch (e) {
       if (mounted) {
