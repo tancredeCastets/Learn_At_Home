@@ -15,6 +15,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
   late TabController _tabController;
   final _searchController = TextEditingController();
   bool _isSearching = false;
+  // ignore: unused_field
   bool _isLoading = true;
 
   // Conversations depuis Supabase

@@ -135,6 +135,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
     );
   }
 
+  // ignore: unused_element
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,

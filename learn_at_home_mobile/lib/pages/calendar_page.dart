@@ -14,6 +14,7 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedMonth = DateTime.now();
   bool _isMonthView = true; // true = mois, false = semaine
+  // ignore: unused_field
   bool _isLoading = true; 
 
   // Événements depuis Supabase
@@ -126,6 +127,7 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
+  // ignore: unused_element
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
