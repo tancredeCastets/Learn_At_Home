@@ -20,6 +20,7 @@ class _DashboardPageState extends State<DashboardPage> {
     'tasksTotal': 0,
     'hoursThisWeek': 0,
     'sessionsThisMonth': 0,
+    'unreadMessages': 0,
   };
 
   @override
@@ -66,6 +67,19 @@ class _DashboardPageState extends State<DashboardPage> {
       final allTasks = List<Map<String, dynamic>>.from(allTasksResponse);
       final completedTasks = allTasks.where((t) => t['is_completed'] == true).length;
 
+      // Compter les messages non lus
+      int unreadMessages = 0;
+      try {
+        final unreadResponse = await supabase
+            .from('messages')
+            .select('id')
+            .neq('sender_id', userId)
+            .eq('is_read', false);
+        unreadMessages = (unreadResponse as List).length;
+      } catch (e) {
+        // Si erreur, garder 0
+      }
+
       setState(() {
         _upcomingTasks = List<Map<String, dynamic>>.from(tasksResponse).map((task) {
           return {
@@ -93,6 +107,7 @@ class _DashboardPageState extends State<DashboardPage> {
           'tasksTotal': allTasks.length,
           'hoursThisWeek': 0,
           'sessionsThisMonth': _upcomingEvents.length,
+          'unreadMessages': unreadMessages,
         };
 
         _isLoading = false;

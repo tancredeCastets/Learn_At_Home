@@ -32,6 +32,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     super.initState();
     _loadMessages();
     _subscribeToMessages();
+    _markMessagesAsRead();
   }
 
   @override
@@ -40,6 +41,24 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     _scrollController.dispose();
     _messagesSubscription?.unsubscribe();
     super.dispose();
+  }
+
+  Future<void> _markMessagesAsRead() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      
+      // Marquer tous les messages non lus de cette conversation comme lus
+      // (seulement ceux qui ne sont pas envoyés par moi)
+      await supabase
+          .from('messages')
+          .update({'is_read': true})
+          .eq('conversation_id', widget.conversationId)
+          .neq('sender_id', userId as Object)
+          .eq('is_read', false);
+    } catch (e) {
+      // Silently fail
+    }
   }
 
   Future<void> _loadMessages() async {
@@ -88,7 +107,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             column: 'conversation_id',
             value: widget.conversationId,
           ),
-          callback: (payload) {
+          callback: (payload) async {
             final msg = payload.newRecord;
             final userId = supabase.auth.currentUser?.id;
             
@@ -101,10 +120,20 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                 'content': msg['content'] ?? '',
                 'isMe': false,
                 'sent_at': _formatTime(DateTime.parse(msg['sent_at'])),
-                'is_read': false,
+                'is_read': true,
               });
             });
             _scrollToBottom();
+            
+            // Marquer ce message comme lu immédiatement
+            try {
+              await supabase
+                  .from('messages')
+                  .update({'is_read': true})
+                  .eq('id', msg['id']);
+            } catch (e) {
+              // Silently fail
+            }
           },
         )
         .subscribe();
