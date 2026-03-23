@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/login_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await Supabase.initialize(
+    url: 'https://rypkxvxfxmehytaftnfj.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5cGt4dnhmeG1laHl0YWZ0bmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NTYyNTgsImV4cCI6MjA4ODAzMjI1OH0.0z6TR6VAFt7GBmucbST81Kv21ZNgVVDpmZHp9pVXnUY',
+  );
+  
   runApp(const MyApp());
 }
+
+// Raccourci pour accéder au client Supabase partout dans l'app
+final supabase = Supabase.instance.client;
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

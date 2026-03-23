@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+enum UserRole { eleve, benevole }
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -9,7 +12,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -17,10 +21,12 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   bool _acceptTerms = false;
+  UserRole _selectedRole = UserRole.eleve;
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -55,21 +61,57 @@ class _RegisterPageState extends State<RegisterPage> {
         _isLoading = true;
       });
 
-      // Simuler une inscription
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Inscription réussie !'),
-            backgroundColor: Colors.green,
-          ),
+      try {
+        // Inscription avec Supabase Auth
+        final response = await Supabase.instance.client.auth.signUp(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
         );
-        Navigator.pop(context);
+
+        if (response.user != null) {
+          // Créer le profil dans la table profiles
+          await Supabase.instance.client.from('profiles').insert({
+            'id': response.user!.id,
+            'first_name': _firstNameController.text.trim(),
+            'last_name': _lastNameController.text.trim(),
+            'email': _emailController.text.trim(),
+            'role': _selectedRole == UserRole.eleve ? 'student' : 'volunteer',
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Inscription réussie ! Vous pouvez vous connecter.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pop(context);
+          }
+        }
+      } on AuthException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -95,7 +137,10 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 20),
               // En-tête
               _buildHeader(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+              // Sélecteur de rôle
+              _buildRoleSelector(),
+              const SizedBox(height: 24),
               // Formulaire d'inscription
               _buildRegisterForm(),
               const SizedBox(height: 16),
@@ -136,15 +181,108 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  Widget _buildRoleSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Je suis',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF2D3748),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildRoleOption(
+                role: UserRole.eleve,
+                icon: Icons.school_outlined,
+                label: 'Élève',
+                description: 'Je cherche de l\'aide',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildRoleOption(
+                role: UserRole.benevole,
+                icon: Icons.volunteer_activism_outlined,
+                label: 'Bénévole',
+                description: 'Je veux aider',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleOption({
+    required UserRole role,
+    required IconData icon,
+    required String label,
+    required String description,
+  }) {
+    final isSelected = _selectedRole == role;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedRole = role;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF4A90A4).withOpacity(0.1) : Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF4A90A4) : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? const Color(0xFF4A90A4) : Colors.grey[600],
+              size: 32,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? const Color(0xFF4A90A4) : Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildRegisterForm() {
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Champ nom
+          // Champ prénom
           const Text(
-            'Nom complet',
+            'Prénom',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -153,11 +291,40 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           const SizedBox(height: 8),
           TextFormField(
-            controller: _nameController,
+            controller: _firstNameController,
             keyboardType: TextInputType.name,
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(
-              hintText: 'Entrez votre nom complet',
+              hintText: 'Entrez votre prénom',
+              prefixIcon: Icon(Icons.person_outline, color: Color(0xFF4A90A4)),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Veuillez entrer votre prénom';
+              }
+              if (value.length < 2) {
+                return 'Le prénom doit contenir au moins 2 caractères';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          // Champ nom
+          const Text(
+            'Nom',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2D3748),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _lastNameController,
+            keyboardType: TextInputType.name,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(
+              hintText: 'Entrez votre nom de famille',
               prefixIcon: Icon(Icons.person_outline, color: Color(0xFF4A90A4)),
             ),
             validator: (value) {
