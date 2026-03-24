@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/login_page.dart';
+import '../pages/profile_page.dart';
 
 class ProfileMenu extends StatefulWidget {
   const ProfileMenu({super.key});
@@ -136,6 +137,16 @@ class _ProfileMenuState extends State<ProfileMenu> {
         ),
         const PopupMenuDivider(),
         PopupMenuItem(
+          value: 'profile',
+          child: Row(
+            children: const [
+              Icon(Icons.person_outline, color: Color(0xFF4A90A4), size: 20),
+              SizedBox(width: 8),
+              Text('Mon profil'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
           value: 'logout',
           child: Row(
             children: const [
@@ -147,7 +158,12 @@ class _ProfileMenuState extends State<ProfileMenu> {
         ),
       ],
       onSelected: (value) {
-        if (value == 'logout') {
+        if (value == 'profile') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfilePage()),
+          );
+        } else if (value == 'logout') {
           _logout();
         }
       },
