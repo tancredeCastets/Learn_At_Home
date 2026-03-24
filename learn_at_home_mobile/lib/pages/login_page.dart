@@ -125,25 +125,26 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildHeader() {
     return Column(
       children: [
-        // Icône de l'application
+        // Logo de l'application
         Container(
           width: 100,
           height: 100,
           decoration: BoxDecoration(
-            color: const Color(0xFF4A90A4),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF4A90A4).withOpacity(0.3),
+                color: const Color(0xFF10B981).withOpacity(0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
             ],
           ),
-          child: const Icon(
-            Icons.school_rounded,
-            size: 50,
-            color: Colors.white,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -185,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(
               hintText: 'Entrez votre email',
-              prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF4A90A4)),
+              prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF10B981)),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -213,7 +214,7 @@ class _LoginPageState extends State<LoginPage> {
             obscureText: _obscurePassword,
             decoration: InputDecoration(
               hintText: 'Entrez votre mot de passe',
-              prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF4A90A4)),
+              prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF10B981)),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -250,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
         child: const Text(
           'Mot de passe oublié ?',
           style: TextStyle(
-            color: Color(0xFF4A90A4),
+            color: Color(0xFF10B981),
             fontWeight: FontWeight.w600,
           ),
         ),

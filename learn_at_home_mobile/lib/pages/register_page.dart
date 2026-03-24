@@ -236,10 +236,10 @@ class _RegisterPageState extends State<RegisterPage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4A90A4).withOpacity(0.1) : Colors.grey[100],
+          color: isSelected ? const Color(0xFF10B981).withOpacity(0.1) : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF4A90A4) : Colors.transparent,
+            color: isSelected ? const Color(0xFF10B981) : Colors.transparent,
             width: 2,
           ),
         ),
@@ -247,7 +247,7 @@ class _RegisterPageState extends State<RegisterPage> {
           children: [
             Icon(
               icon,
-              color: isSelected ? const Color(0xFF4A90A4) : Colors.grey[600],
+              color: isSelected ? const Color(0xFF10B981) : Colors.grey[600],
               size: 32,
             ),
             const SizedBox(height: 8),
@@ -256,7 +256,7 @@ class _RegisterPageState extends State<RegisterPage> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? const Color(0xFF4A90A4) : Colors.grey[600],
+                color: isSelected ? const Color(0xFF10B981) : Colors.grey[600],
               ),
             ),
             const SizedBox(height: 4),
@@ -296,7 +296,7 @@ class _RegisterPageState extends State<RegisterPage> {
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(
               hintText: 'Entrez votre prénom',
-              prefixIcon: Icon(Icons.person_outline, color: Color(0xFF4A90A4)),
+              prefixIcon: Icon(Icons.person_outline, color: Color(0xFF10B981)),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -325,7 +325,7 @@ class _RegisterPageState extends State<RegisterPage> {
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(
               hintText: 'Entrez votre nom de famille',
-              prefixIcon: Icon(Icons.person_outline, color: Color(0xFF4A90A4)),
+              prefixIcon: Icon(Icons.person_outline, color: Color(0xFF10B981)),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -353,7 +353,7 @@ class _RegisterPageState extends State<RegisterPage> {
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(
               hintText: 'Entrez votre email',
-              prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF4A90A4)),
+              prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF10B981)),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -381,7 +381,7 @@ class _RegisterPageState extends State<RegisterPage> {
             obscureText: _obscurePassword,
             decoration: InputDecoration(
               hintText: 'Créez un mot de passe',
-              prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF4A90A4)),
+              prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF10B981)),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -416,7 +416,7 @@ class _RegisterPageState extends State<RegisterPage> {
             obscureText: _obscureConfirmPassword,
             decoration: InputDecoration(
               hintText: 'Confirmez votre mot de passe',
-              prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF4A90A4)),
+              prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF10B981)),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
@@ -454,7 +454,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 _acceptTerms = value ?? false;
               });
             },
-            activeColor: const Color(0xFF4A90A4),
+            activeColor: const Color(0xFF10B981),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
             ),
@@ -476,7 +476,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   TextSpan(
                     text: 'conditions d\'utilisation',
                     style: TextStyle(
-                      color: Color(0xFF4A90A4),
+                      color: Color(0xFF10B981),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -484,7 +484,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   TextSpan(
                     text: 'politique de confidentialité',
                     style: TextStyle(
-                      color: Color(0xFF4A90A4),
+                      color: Color(0xFF10B981),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -534,7 +534,7 @@ class _RegisterPageState extends State<RegisterPage> {
           child: const Text(
             'Se connecter',
             style: TextStyle(
-              color: Color(0xFF4A90A4),
+              color: Color(0xFF10B981),
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),

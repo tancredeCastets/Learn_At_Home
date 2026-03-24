@@ -20,6 +20,7 @@ class _DashboardPageState extends State<DashboardPage> {
     'tasksTotal': 0,
     'hoursThisWeek': 0,
     'sessionsThisMonth': 0,
+    'unreadMessages': 0,
   };
 
   @override
@@ -66,6 +67,19 @@ class _DashboardPageState extends State<DashboardPage> {
       final allTasks = List<Map<String, dynamic>>.from(allTasksResponse);
       final completedTasks = allTasks.where((t) => t['is_completed'] == true).length;
 
+      // Compter les messages non lus
+      int unreadMessages = 0;
+      try {
+        final unreadResponse = await supabase
+            .from('messages')
+            .select('id')
+            .neq('sender_id', userId)
+            .eq('is_read', false);
+        unreadMessages = (unreadResponse as List).length;
+      } catch (e) {
+        // Si erreur, garder 0
+      }
+
       setState(() {
         _upcomingTasks = List<Map<String, dynamic>>.from(tasksResponse).map((task) {
           return {
@@ -93,6 +107,7 @@ class _DashboardPageState extends State<DashboardPage> {
           'tasksTotal': allTasks.length,
           'hoursThisWeek': 0,
           'sessionsThisMonth': _upcomingEvents.length,
+          'unreadMessages': unreadMessages,
         };
 
         _isLoading = false;
@@ -231,7 +246,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildSectionTitle(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, color: const Color(0xFF4A90A4), size: 24),
+        Icon(icon, color: const Color(0xFF10B981), size: 24),
         const SizedBox(width: 8),
         Text(
           title,
@@ -306,7 +321,7 @@ class _DashboardPageState extends State<DashboardPage> {
         width: 4,
         height: 40,
         decoration: BoxDecoration(
-          color: const Color(0xFF4A90A4),
+          color: const Color(0xFF10B981),
           borderRadius: BorderRadius.circular(2),
         ),
       ),
@@ -413,12 +428,12 @@ class _DashboardPageState extends State<DashboardPage> {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: const Color(0xFF4A90A4).withOpacity(0.1),
+          color: const Color(0xFF10B981).withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Icon(
           Icons.event,
-          color: Color(0xFF4A90A4),
+          color: Color(0xFF10B981),
         ),
       ),
       title: Text(

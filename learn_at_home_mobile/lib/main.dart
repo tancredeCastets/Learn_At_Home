@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4A90A4),
+          seedColor: const Color(0xFF10B981),
           brightness: Brightness.light,
         ),
         useMaterial3: true,
@@ -43,13 +43,13 @@ class MyApp extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF4A90A4), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF4A90A4),
+            backgroundColor: const Color(0xFF10B981),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
@@ -63,12 +63,12 @@ class MyApp extends StatelessWidget {
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF4A90A4),
+            foregroundColor: const Color(0xFF10B981),
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            side: const BorderSide(color: Color(0xFF4A90A4), width: 2),
+            side: const BorderSide(color: Color(0xFF10B981), width: 2),
             textStyle: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,

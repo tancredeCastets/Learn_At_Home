@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/login_page.dart';
+import '../pages/profile_page.dart';
 
 class ProfileMenu extends StatefulWidget {
   const ProfileMenu({super.key});
@@ -12,6 +13,7 @@ class ProfileMenu extends StatefulWidget {
 class _ProfileMenuState extends State<ProfileMenu> {
   String _userName = '';
   String _userInitials = '?';
+  String? _profilePicture;
 
   @override
   void initState() {
@@ -28,7 +30,7 @@ class _ProfileMenuState extends State<ProfileMenu> {
 
       final response = await supabase
           .from('profiles')
-          .select('first_name, last_name')
+          .select('first_name, last_name, profile_picture')
           .eq('id', userId)
           .maybeSingle();
 
@@ -39,6 +41,7 @@ class _ProfileMenuState extends State<ProfileMenu> {
           _userName = '$firstName $lastName'.trim();
           _userInitials = '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}'.toUpperCase();
           if (_userInitials.isEmpty) _userInitials = '?';
+          _profilePicture = response['profile_picture'];
         });
       }
     } catch (e) {
@@ -96,18 +99,21 @@ class _ProfileMenuState extends State<ProfileMenu> {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
-              child: Text(
-                _userInitials,
-                style: const TextStyle(
-                  color: Color(0xFF4A90A4),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
+              backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
+              backgroundImage: _profilePicture != null ? NetworkImage(_profilePicture!) : null,
+              child: _profilePicture == null
+                  ? Text(
+                      _userInitials,
+                      style: const TextStyle(
+                        color: Color(0xFF10B981),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    )
+                  : null,
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.arrow_drop_down, color: Color(0xFF4A90A4)),
+            const Icon(Icons.arrow_drop_down, color: Color(0xFF10B981)),
           ],
         ),
       ),
@@ -136,6 +142,16 @@ class _ProfileMenuState extends State<ProfileMenu> {
         ),
         const PopupMenuDivider(),
         PopupMenuItem(
+          value: 'profile',
+          child: Row(
+            children: const [
+              Icon(Icons.person_outline, color: Color(0xFF10B981), size: 20),
+              SizedBox(width: 8),
+              Text('Mon profil'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
           value: 'logout',
           child: Row(
             children: const [
@@ -147,7 +163,12 @@ class _ProfileMenuState extends State<ProfileMenu> {
         ),
       ],
       onSelected: (value) {
-        if (value == 'logout') {
+        if (value == 'profile') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfilePage()),
+          );
+        } else if (value == 'logout') {
           _logout();
         }
       },

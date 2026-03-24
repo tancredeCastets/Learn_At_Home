@@ -15,6 +15,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
   late TabController _tabController;
   final _searchController = TextEditingController();
   bool _isSearching = false;
+  // ignore: unused_field
   bool _isLoading = true;
 
   // Conversations depuis Supabase
@@ -49,44 +50,79 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         return;
       }
 
-      // Charger les conversations où l'utilisateur est participant
-      final response = await supabase
-          .from('conversations')
-          .select('id, last_message, last_message_at, participant_1, participant_2')
-          .or('participant_1.eq.$userId,participant_2.eq.$userId')
-          .order('last_message_at', ascending: false);
+      // Trouver les conversations où l'utilisateur est participant
+      final myParticipations = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', userId);
 
-      // Charger les profils des autres participants
       final List<Map<String, dynamic>> conversations = [];
       
-      for (final conv in response) {
-        final isParticipant1 = conv['participant_1'] == userId;
-        final otherUserId = isParticipant1 ? conv['participant_2'] : conv['participant_1'];
+      for (final participation in myParticipations) {
+        final conversationId = participation['conversation_id'];
+        
+        // Trouver l'autre participant
+        final otherParticipant = await supabase
+            .from('conversation_participants')
+            .select('user_id')
+            .eq('conversation_id', conversationId)
+            .neq('user_id', userId)
+            .maybeSingle();
         
         String name = 'Utilisateur';
+        String otherUserId = '';
+        String? profilePicture;
         
-        if (otherUserId != null) {
+        if (otherParticipant != null) {
+          otherUserId = otherParticipant['user_id'];
           final profileResponse = await supabase
               .from('profiles')
-              .select('first_name, last_name')
+              .select('first_name, last_name, profile_picture')
               .eq('id', otherUserId)
               .maybeSingle();
           
           if (profileResponse != null) {
             name = '${profileResponse['first_name'] ?? ''} ${profileResponse['last_name'] ?? ''}'.trim();
+            profilePicture = profileResponse['profile_picture'];
           }
         }
         
+        // Récupérer le dernier message
+        final lastMessage = await supabase
+            .from('messages')
+            .select('content, sent_at')
+            .eq('conversation_id', conversationId)
+            .order('sent_at', ascending: false)
+            .limit(1)
+            .maybeSingle();
+        
+        // Compter les messages non lus
+        final unreadCount = await supabase
+            .from('messages')
+            .select('id')
+            .eq('conversation_id', conversationId)
+            .neq('sender_id', userId)
+            .eq('is_read', false);
+        
         conversations.add({
-          'id': conv['id'],
+          'id': conversationId,
           'name': name.isNotEmpty ? name : 'Utilisateur',
           'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
-          'lastMessage': conv['last_message'] ?? '',
-          'time': _formatMessageTime(conv['last_message_at']),
-          'unread': 0,
+          'profile_picture': profilePicture,
+          'lastMessage': lastMessage?['content'] ?? '',
+          'time': _formatMessageTime(lastMessage?['sent_at']),
+          'unread': (unreadCount as List).length,
           'other_user_id': otherUserId,
         });
       }
+      
+      // Trier par dernier message
+      conversations.sort((a, b) {
+        if (a['time'] == '' && b['time'] == '') return 0;
+        if (a['time'] == '') return 1;
+        if (b['time'] == '') return -1;
+        return b['time'].compareTo(a['time']);
+      });
 
       setState(() {
         _conversations = conversations;
@@ -122,17 +158,19 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         
         String name = 'Contact';
         String email = '';
+        String? profilePicture;
         
         if (contactId != null) {
           final profileResponse = await supabase
               .from('profiles')
-              .select('first_name, last_name, email')
+              .select('first_name, last_name, email, profile_picture')
               .eq('id', contactId)
               .maybeSingle();
           
           if (profileResponse != null) {
             name = '${profileResponse['first_name'] ?? ''} ${profileResponse['last_name'] ?? ''}'.trim();
             email = profileResponse['email'] ?? '';
+            profilePicture = profileResponse['profile_picture'];
           }
         }
         
@@ -141,6 +179,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           'contact_id': contactId,
           'name': name.isNotEmpty ? name : 'Contact',
           'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
+          'profile_picture': profilePicture,
           'email': email,
         });
       }
@@ -193,7 +232,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _tabController.index == 0 ? _showNewConversationDialog : _showAddContactDialog,
-        backgroundColor: const Color(0xFF4A90A4),
+        backgroundColor: const Color(0xFF10B981),
         child: Icon(
           _tabController.index == 0 ? Icons.chat_bubble_outline : Icons.person_add,
           color: Colors.white,
@@ -229,7 +268,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         IconButton(
           icon: Icon(
             _isSearching ? Icons.close : Icons.search,
-            color: const Color(0xFF4A90A4),
+            color: const Color(0xFF10B981),
           ),
           onPressed: () {
             setState(() {
@@ -241,16 +280,16 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           },
         ),
         IconButton(
-          icon: const Icon(Icons.more_vert, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.more_vert, color: Color(0xFF10B981)),
           onPressed: _showOptionsMenu,
         ),
         const ProfileMenu(),
       ],
       bottom: TabBar(
         controller: _tabController,
-        labelColor: const Color(0xFF4A90A4),
+        labelColor: const Color(0xFF10B981),
         unselectedLabelColor: Colors.grey,
-        indicatorColor: const Color(0xFF4A90A4),
+        indicatorColor: const Color(0xFF10B981),
         indicatorWeight: 3,
         tabs: const [
           Tab(text: 'Conversations'),
@@ -317,15 +356,20 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
-                child: Text(
-                  conversation['avatar'],
-                  style: const TextStyle(
-                    color: Color(0xFF4A90A4),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
+                backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
+                backgroundImage: conversation['profile_picture'] != null
+                    ? NetworkImage(conversation['profile_picture'])
+                    : null,
+                child: conversation['profile_picture'] == null
+                    ? Text(
+                        conversation['avatar'],
+                        style: const TextStyle(
+                          color: Color(0xFF10B981),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      )
+                    : null,
               ),
             ],
           ),
@@ -344,7 +388,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                 conversation['time'],
                 style: TextStyle(
                   fontSize: 12,
-                  color: hasUnread ? const Color(0xFF4A90A4) : Colors.grey,
+                  color: hasUnread ? const Color(0xFF10B981) : Colors.grey,
                   fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
@@ -368,7 +412,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                   margin: const EdgeInsets.only(left: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4A90A4),
+                    color: const Color(0xFF10B981),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -430,14 +474,19 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: CircleAvatar(
           radius: 24,
-          backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
-          child: Text(
-            contact['avatar'],
-            style: const TextStyle(
-              color: Color(0xFF4A90A4),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
+          backgroundImage: contact['profile_picture'] != null
+              ? NetworkImage(contact['profile_picture'])
+              : null,
+          child: contact['profile_picture'] == null
+              ? Text(
+                  contact['avatar'],
+                  style: const TextStyle(
+                    color: Color(0xFF10B981),
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              : null,
         ),
         title: Text(
           contact['name'],
@@ -450,7 +499,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF4A90A4)),
+              icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF10B981)),
               onPressed: () => _startConversationWithContact(contact),
             ),
             IconButton(
@@ -476,10 +525,10 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF4A90A4).withOpacity(0.1),
+              color: const Color(0xFF10B981).withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 40, color: const Color(0xFF4A90A4)),
+            child: Icon(icon, size: 40, color: const Color(0xFF10B981)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -508,9 +557,10 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           conversationId: conversation['id'],
           contactName: conversation['name'],
           contactAvatar: conversation['avatar'],
+          contactProfilePicture: conversation['profile_picture'],
         ),
       ),
-    );
+    ).then((_) => _loadConversations());
   }
 
   Future<void> _startConversationWithContact(Map<String, dynamic> contact) async {
@@ -519,25 +569,45 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       final userId = supabase.auth.currentUser?.id;
       final contactId = contact['contact_id'];
 
-      // Vérifier si une conversation existe déjà
-      final existing = await supabase
-          .from('conversations')
-          .select('id')
-          .or('and(participant_1.eq.$userId,participant_2.eq.$contactId),and(participant_1.eq.$contactId,participant_2.eq.$userId)')
-          .maybeSingle();
+      // Trouver les conversations où je suis participant
+      final myConversations = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', userId as Object);
 
-      String conversationId;
-
-      if (existing != null) {
-        conversationId = existing['id'];
-      } else {
-        // Créer une nouvelle conversation
-        final response = await supabase.from('conversations').insert({
-          'participant_1': userId,
-          'participant_2': contactId,
-        }).select('id').single();
+      String? conversationId;
+      
+      // Vérifier si une conversation existe déjà avec ce contact
+      for (final conv in myConversations) {
+        final convId = conv['conversation_id'];
+        final otherParticipant = await supabase
+            .from('conversation_participants')
+            .select('user_id')
+            .eq('conversation_id', convId)
+            .eq('user_id', contactId)
+            .maybeSingle();
         
-        conversationId = response['id'];
+        if (otherParticipant != null) {
+          conversationId = convId;
+          break;
+        }
+      }
+
+      if (conversationId == null) {
+        // Créer une nouvelle conversation
+        final newConv = await supabase
+            .from('conversations')
+            .insert({'created_at': DateTime.now().toIso8601String()})
+            .select('id')
+            .single();
+        
+        conversationId = newConv['id'];
+        
+        // Ajouter les deux participants
+        await supabase.from('conversation_participants').insert([
+          {'conversation_id': conversationId, 'user_id': userId},
+          {'conversation_id': conversationId, 'user_id': contactId},
+        ]);
       }
 
       if (mounted) {
@@ -545,12 +615,13 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           context,
           MaterialPageRoute(
             builder: (context) => ChatConversationPage(
-              conversationId: conversationId,
+              conversationId: conversationId!,
               contactName: contact['name'],
               contactAvatar: contact['avatar'],
+              contactProfilePicture: contact['profile_picture'],
             ),
           ),
-        );
+        ).then((_) => _loadConversations());
       }
     } catch (e) {
       if (mounted) {
@@ -625,11 +696,11 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                   final contact = _contacts[index];
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+                      backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
                       child: Text(
                         contact['avatar'],
                         style: const TextStyle(
-                          color: Color(0xFF4A90A4),
+                          color: Color(0xFF10B981),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -660,7 +731,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.mark_chat_read, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.mark_chat_read, color: Color(0xFF10B981)),
               title: const Text('Tout marquer comme lu'),
               onTap: () {
                 Navigator.pop(context);
@@ -670,14 +741,14 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               },
             ),
             ListTile(
-              leading: const Icon(Icons.archive, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.archive, color: Color(0xFF10B981)),
               title: const Text('Conversations archivées'),
               onTap: () {
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.settings, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.settings, color: Color(0xFF10B981)),
               title: const Text('Paramètres de chat'),
               onTap: () {
                 Navigator.pop(context);
@@ -700,7 +771,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.person, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.person, color: Color(0xFF10B981)),
               title: const Text('Voir le profil'),
               onTap: () => Navigator.pop(context),
             ),
@@ -823,7 +894,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                   icon: const Icon(Icons.person_add),
                   label: const Text('Ajouter'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A90A4),
+                    backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

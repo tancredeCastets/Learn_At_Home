@@ -5,12 +5,14 @@ class ChatConversationPage extends StatefulWidget {
   final String conversationId;
   final String contactName;
   final String contactAvatar;
+  final String? contactProfilePicture;
 
   const ChatConversationPage({
     super.key,
     required this.conversationId,
     required this.contactName,
     required this.contactAvatar,
+    this.contactProfilePicture,
   });
 
   @override
@@ -32,6 +34,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     super.initState();
     _loadMessages();
     _subscribeToMessages();
+    _markMessagesAsRead();
   }
 
   @override
@@ -40,6 +43,24 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     _scrollController.dispose();
     _messagesSubscription?.unsubscribe();
     super.dispose();
+  }
+
+  Future<void> _markMessagesAsRead() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      
+      // Marquer tous les messages non lus de cette conversation comme lus
+      // (seulement ceux qui ne sont pas envoyés par moi)
+      await supabase
+          .from('messages')
+          .update({'is_read': true})
+          .eq('conversation_id', widget.conversationId)
+          .neq('sender_id', userId as Object)
+          .eq('is_read', false);
+    } catch (e) {
+      // Silently fail
+    }
   }
 
   Future<void> _loadMessages() async {
@@ -62,7 +83,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             'content': msg['content'] ?? '',
             'isMe': msg['sender_id'] == userId,
             'sent_at': _formatTime(DateTime.parse(msg['sent_at'])),
-            'read_at': msg['read_at'] != null ? _formatTime(DateTime.parse(msg['read_at'])) : null,
+            'is_read': msg['is_read'] == true || msg['is_read'] == 'true',
           };
         }).toList();
         _isLoading = false;
@@ -88,20 +109,33 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             column: 'conversation_id',
             value: widget.conversationId,
           ),
-          callback: (payload) {
+          callback: (payload) async {
             final msg = payload.newRecord;
             final userId = supabase.auth.currentUser?.id;
+            
+            // Ne pas ajouter si c'est mon propre message (déjà ajouté en optimistic)
+            if (msg['sender_id'] == userId) return;
             
             setState(() {
               _messages.add({
                 'id': msg['id'],
                 'content': msg['content'] ?? '',
-                'isMe': msg['sender_id'] == userId,
+                'isMe': false,
                 'sent_at': _formatTime(DateTime.parse(msg['sent_at'])),
-                'read_at': null,
+                'is_read': true,
               });
             });
             _scrollToBottom();
+            
+            // Marquer ce message comme lu immédiatement
+            try {
+              await supabase
+                  .from('messages')
+                  .update({'is_read': true})
+                  .eq('id', msg['id']);
+            } catch (e) {
+              // Silently fail
+            }
           },
         )
         .subscribe();
@@ -125,25 +159,38 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     final content = _messageController.text.trim();
     _messageController.clear();
 
-    try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser?.id;
+    final now = DateTime.now();
 
+    // Ajouter le message localement immédiatement (optimistic update)
+    final tempId = 'temp_${now.millisecondsSinceEpoch}';
+    setState(() {
+      _messages.add({
+        'id': tempId,
+        'content': content,
+        'isMe': true,
+        'sent_at': _formatTime(now),
+        'is_read': false,
+      });
+    });
+    _scrollToBottom();
+
+    try {
       // Insérer le message dans Supabase
       await supabase.from('messages').insert({
         'conversation_id': widget.conversationId,
         'sender_id': userId,
         'content': content,
-        'sent_at': DateTime.now().toIso8601String(),
+        'is_read': false,
+        'sent_at': now.toIso8601String(),
       });
 
-      // Mettre à jour le dernier message de la conversation
-      await supabase.from('conversations').update({
-        'last_message': content,
-        'last_message_at': DateTime.now().toIso8601String(),
-      }).eq('id', widget.conversationId);
-
     } catch (e) {
+      // En cas d'erreur, retirer le message temporaire
+      setState(() {
+        _messages.removeWhere((m) => m['id'] == tempId);
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
@@ -189,14 +236,19 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
-                child: Text(
-                  widget.contactAvatar,
-                  style: const TextStyle(
-                    color: Color(0xFF4A90A4),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
+                backgroundImage: widget.contactProfilePicture != null
+                    ? NetworkImage(widget.contactProfilePicture!)
+                    : null,
+                child: widget.contactProfilePicture == null
+                    ? Text(
+                        widget.contactAvatar,
+                        style: const TextStyle(
+                          color: Color(0xFF10B981),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : null,
               ),
             ],
           ),
@@ -215,7 +267,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.videocam_outlined, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.videocam_outlined, color: Color(0xFF10B981)),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Appel vidéo bientôt disponible')),
@@ -223,7 +275,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           },
         ),
         IconButton(
-          icon: const Icon(Icons.call_outlined, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.call_outlined, color: Color(0xFF10B981)),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Appel audio bientôt disponible')),
@@ -231,7 +283,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           },
         ),
         IconButton(
-          icon: const Icon(Icons.more_vert, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.more_vert, color: Color(0xFF10B981)),
           onPressed: _showConversationOptions,
         ),
       ],
@@ -266,11 +318,11 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           if (!isMe && showAvatar)
             CircleAvatar(
               radius: 16,
-              backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+              backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
               child: Text(
                 widget.contactAvatar,
                 style: const TextStyle(
-                  color: Color(0xFF4A90A4),
+                  color: Color(0xFF10B981),
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -283,7 +335,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: isMe ? const Color(0xFF4A90A4) : Colors.white,
+                color: isMe ? const Color(0xFF10B981) : Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
@@ -322,7 +374,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                       if (isMe) ...[
                         const SizedBox(width: 4),
                         Icon(
-                          message['read_at'] != null
+                          message['is_read'] == true
                               ? Icons.done_all
                               : Icons.done,
                           size: 14,
@@ -349,11 +401,11 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         children: [
           CircleAvatar(
             radius: 14,
-            backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+            backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
             child: Text(
               widget.contactAvatar,
               style: const TextStyle(
-                color: Color(0xFF4A90A4),
+                color: Color(0xFF10B981),
                 fontWeight: FontWeight.bold,
                 fontSize: 10,
               ),
@@ -415,7 +467,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.add_circle_outline, color: Color(0xFF4A90A4)),
+              icon: const Icon(Icons.add_circle_outline, color: Color(0xFF10B981)),
               onPressed: _showAttachmentOptions,
             ),
             Expanded(
@@ -441,7 +493,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             const SizedBox(width: 8),
             Container(
               decoration: const BoxDecoration(
-                color: Color(0xFF4A90A4),
+                color: Color(0xFF10B981),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
@@ -519,12 +571,12 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.person, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.person, color: Color(0xFF10B981)),
               title: const Text('Voir le profil'),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              leading: const Icon(Icons.search, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.search, color: Color(0xFF10B981)),
               title: const Text('Rechercher dans la conversation'),
               onTap: () => Navigator.pop(context),
             ),
