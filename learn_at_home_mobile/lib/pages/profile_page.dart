@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -18,6 +19,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String _lastName = '';
   String _email = '';
   String _role = '';
+  String? _avatarUrl;
 
   // Controllers pour l'édition
   late TextEditingController _firstNameController;
@@ -58,7 +60,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       final response = await supabase
           .from('profiles')
-          .select('first_name, last_name, role')
+          .select('first_name, last_name, role, profile_picture')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -67,6 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _firstName = response['first_name'] ?? '';
           _lastName = response['last_name'] ?? '';
           _role = response['role'] ?? 'student';
+          _avatarUrl = response['profile_picture'];
           _firstNameController.text = _firstName;
           _lastNameController.text = _lastName;
           _isLoading = false;
@@ -133,6 +136,140 @@ class _ProfilePageState extends State<ProfilePage> {
       _emailController.text = _email;
       _isEditing = false;
     });
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    // Afficher les options
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.folder_open, color: Color(0xFF4A90A4)),
+              title: const Text('Choisir une image'),
+              onTap: () => Navigator.pop(context, 'pick'),
+            ),
+            if (_avatarUrl != null)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Supprimer la photo', style: TextStyle(color: Colors.red)),
+                onTap: () => Navigator.pop(context, 'delete'),
+              ),
+          ],
+        ),
+      ),
+    );
+
+    if (choice == 'delete') {
+      await _deleteAvatar();
+      return;
+    }
+
+    if (choice != 'pick') return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true, // Important pour web
+    );
+
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    if (file.bytes == null) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      if (userId == null) {
+        setState(() => _isSaving = false);
+        return;
+      }
+
+      final fileExt = file.extension ?? 'jpg';
+      final fileName = '$userId/avatar.$fileExt';
+
+      // Upload vers Supabase Storage (avec bytes pour web compatibilité)
+      await supabase.storage.from('avatars').uploadBinary(
+        fileName,
+        file.bytes!,
+        fileOptions: const FileOptions(upsert: true),
+      );
+
+      // Obtenir l'URL publique avec timestamp pour éviter le cache
+      final imageUrl = '${supabase.storage.from('avatars').getPublicUrl(fileName)}?t=${DateTime.now().millisecondsSinceEpoch}';
+
+      // Mettre à jour le profil
+      await supabase.from('profiles').update({
+        'profile_picture': imageUrl,
+      }).eq('id', userId);
+
+      setState(() {
+        _avatarUrl = imageUrl;
+        _isSaving = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Photo mise à jour'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _deleteAvatar() async {
+    setState(() => _isSaving = true);
+
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      if (userId == null) {
+        setState(() => _isSaving = false);
+        return;
+      }
+
+      // Mettre à jour le profil
+      await supabase.from('profiles').update({
+        'profile_picture': null,
+      }).eq('id', userId);
+
+      setState(() {
+        _avatarUrl = null;
+        _isSaving = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Photo supprimée'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+        setState(() => _isSaving = false);
+      }
+    }
   }
 
   String get _initials {
@@ -203,27 +340,70 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           Row(
             children: [
-              // Avatar
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF4A90A4), Color(0xFF357A8A)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Center(
-                  child: Text(
-                    _initials.isNotEmpty ? _initials : '?',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+              // Avatar cliquable
+              GestureDetector(
+                onTap: _isSaving ? null : _pickAndUploadImage,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        gradient: _avatarUrl == null
+                            ? const LinearGradient(
+                                colors: [Color(0xFF4A90A4), Color(0xFF357A8A)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                        borderRadius: BorderRadius.circular(18),
+                        image: _avatarUrl != null
+                            ? DecorationImage(
+                                image: NetworkImage(_avatarUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: _avatarUrl == null
+                          ? Center(
+                              child: Text(
+                                _initials.isNotEmpty ? _initials : '?',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          : null,
                     ),
-                  ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4A90A4),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: _isSaving
+                            ? const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.camera_alt,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 16),

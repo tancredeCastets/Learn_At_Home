@@ -25,6 +25,7 @@ class AppHeader extends StatefulWidget implements PreferredSizeWidget {
 class _AppHeaderState extends State<AppHeader> {
   String _userName = '';
   String _userInitials = '?';
+  String? _profilePicture;
 
   @override
   void initState() {
@@ -41,7 +42,7 @@ class _AppHeaderState extends State<AppHeader> {
 
       final response = await supabase
           .from('profiles')
-          .select('first_name, last_name')
+          .select('first_name, last_name, profile_picture')
           .eq('id', userId)
           .maybeSingle();
 
@@ -52,6 +53,7 @@ class _AppHeaderState extends State<AppHeader> {
           _userName = '$firstName $lastName'.trim();
           _userInitials = '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}'.toUpperCase();
           if (_userInitials.isEmpty) _userInitials = '?';
+          _profilePicture = response['profile_picture'];
         });
       }
     } catch (e) {
@@ -126,14 +128,17 @@ class _AppHeaderState extends State<AppHeader> {
                 CircleAvatar(
                   radius: 16,
                   backgroundColor: Colors.white,
-                  child: Text(
-                    _userInitials,
-                    style: const TextStyle(
-                      color: Color(0xFF4A90A4),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
+                  backgroundImage: _profilePicture != null ? NetworkImage(_profilePicture!) : null,
+                  child: _profilePicture == null
+                      ? Text(
+                          _userInitials,
+                          style: const TextStyle(
+                            color: Color(0xFF4A90A4),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 4),
                 const Icon(Icons.arrow_drop_down, color: Colors.white),

@@ -5,12 +5,14 @@ class ChatConversationPage extends StatefulWidget {
   final String conversationId;
   final String contactName;
   final String contactAvatar;
+  final String? contactProfilePicture;
 
   const ChatConversationPage({
     super.key,
     required this.conversationId,
     required this.contactName,
     required this.contactAvatar,
+    this.contactProfilePicture,
   });
 
   @override
@@ -235,13 +237,18 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
               CircleAvatar(
                 radius: 20,
                 backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
-                child: Text(
-                  widget.contactAvatar,
-                  style: const TextStyle(
-                    color: Color(0xFF4A90A4),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                backgroundImage: widget.contactProfilePicture != null
+                    ? NetworkImage(widget.contactProfilePicture!)
+                    : null,
+                child: widget.contactProfilePicture == null
+                    ? Text(
+                        widget.contactAvatar,
+                        style: const TextStyle(
+                          color: Color(0xFF4A90A4),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : null,
               ),
             ],
           ),

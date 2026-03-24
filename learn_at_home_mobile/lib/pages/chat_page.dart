@@ -71,17 +71,19 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         
         String name = 'Utilisateur';
         String otherUserId = '';
+        String? profilePicture;
         
         if (otherParticipant != null) {
           otherUserId = otherParticipant['user_id'];
           final profileResponse = await supabase
               .from('profiles')
-              .select('first_name, last_name')
+              .select('first_name, last_name, profile_picture')
               .eq('id', otherUserId)
               .maybeSingle();
           
           if (profileResponse != null) {
             name = '${profileResponse['first_name'] ?? ''} ${profileResponse['last_name'] ?? ''}'.trim();
+            profilePicture = profileResponse['profile_picture'];
           }
         }
         
@@ -106,6 +108,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           'id': conversationId,
           'name': name.isNotEmpty ? name : 'Utilisateur',
           'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
+          'profile_picture': profilePicture,
           'lastMessage': lastMessage?['content'] ?? '',
           'time': _formatMessageTime(lastMessage?['sent_at']),
           'unread': (unreadCount as List).length,
@@ -155,17 +158,19 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         
         String name = 'Contact';
         String email = '';
+        String? profilePicture;
         
         if (contactId != null) {
           final profileResponse = await supabase
               .from('profiles')
-              .select('first_name, last_name, email')
+              .select('first_name, last_name, email, profile_picture')
               .eq('id', contactId)
               .maybeSingle();
           
           if (profileResponse != null) {
             name = '${profileResponse['first_name'] ?? ''} ${profileResponse['last_name'] ?? ''}'.trim();
             email = profileResponse['email'] ?? '';
+            profilePicture = profileResponse['profile_picture'];
           }
         }
         
@@ -174,6 +179,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           'contact_id': contactId,
           'name': name.isNotEmpty ? name : 'Contact',
           'avatar': name.isNotEmpty ? name[0].toUpperCase() : '?',
+          'profile_picture': profilePicture,
           'email': email,
         });
       }
@@ -351,14 +357,19 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               CircleAvatar(
                 radius: 28,
                 backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
-                child: Text(
-                  conversation['avatar'],
-                  style: const TextStyle(
-                    color: Color(0xFF4A90A4),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
+                backgroundImage: conversation['profile_picture'] != null
+                    ? NetworkImage(conversation['profile_picture'])
+                    : null,
+                child: conversation['profile_picture'] == null
+                    ? Text(
+                        conversation['avatar'],
+                        style: const TextStyle(
+                          color: Color(0xFF4A90A4),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      )
+                    : null,
               ),
             ],
           ),
@@ -464,13 +475,18 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         leading: CircleAvatar(
           radius: 24,
           backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
-          child: Text(
-            contact['avatar'],
-            style: const TextStyle(
-              color: Color(0xFF4A90A4),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          backgroundImage: contact['profile_picture'] != null
+              ? NetworkImage(contact['profile_picture'])
+              : null,
+          child: contact['profile_picture'] == null
+              ? Text(
+                  contact['avatar'],
+                  style: const TextStyle(
+                    color: Color(0xFF4A90A4),
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              : null,
         ),
         title: Text(
           contact['name'],
@@ -541,6 +557,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           conversationId: conversation['id'],
           contactName: conversation['name'],
           contactAvatar: conversation['avatar'],
+          contactProfilePicture: conversation['profile_picture'],
         ),
       ),
     ).then((_) => _loadConversations());
@@ -601,6 +618,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               conversationId: conversationId!,
               contactName: contact['name'],
               contactAvatar: contact['avatar'],
+              contactProfilePicture: contact['profile_picture'],
             ),
           ),
         ).then((_) => _loadConversations());
