@@ -18,7 +18,7 @@ class AppBottomNavBar extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: (index) => _onItemTapped(context, index),
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: const Color(0xFF4A90A4),
+      selectedItemColor: const Color(0xFF10B981),
       unselectedItemColor: Colors.grey,
       items: const [
         BottomNavigationBarItem(

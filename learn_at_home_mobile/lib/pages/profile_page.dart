@@ -147,7 +147,7 @@ class _ProfilePageState extends State<ProfilePage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.folder_open, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.folder_open, color: Color(0xFF10B981)),
               title: const Text('Choisir une image'),
               onTap: () => Navigator.pop(context, 'pick'),
             ),
@@ -351,7 +351,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       decoration: BoxDecoration(
                         gradient: _avatarUrl == null
                             ? const LinearGradient(
-                                colors: [Color(0xFF4A90A4), Color(0xFF357A8A)],
+                                colors: [Color(0xFF10B981), Color(0xFF059669)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               )
@@ -383,7 +383,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A90A4),
+                          color: const Color(0xFF10B981),
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
@@ -427,7 +427,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: _role == 'volunteer'
-                            ? const Color(0xFF4A90A4).withOpacity(0.1)
+                            ? const Color(0xFF10B981).withOpacity(0.1)
                             : Colors.purple.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -440,7 +440,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 : Icons.school,
                             size: 14,
                             color: _role == 'volunteer'
-                                ? const Color(0xFF4A90A4)
+                                ? const Color(0xFF10B981)
                                 : Colors.purple,
                           ),
                           const SizedBox(width: 4),
@@ -450,7 +450,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: _role == 'volunteer'
-                                  ? const Color(0xFF4A90A4)
+                                  ? const Color(0xFF10B981)
                                   : Colors.purple,
                             ),
                           ),
@@ -482,7 +482,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4A90A4),
+                      backgroundColor: const Color(0xFF10B981),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: _isSaving
@@ -514,8 +514,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: const Icon(Icons.edit, size: 18),
                 label: const Text('Modifier'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF4A90A4),
-                  side: const BorderSide(color: Color(0xFF4A90A4)),
+                  foregroundColor: const Color(0xFF10B981),
+                  side: const BorderSide(color: Color(0xFF10B981)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -599,7 +599,7 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         Row(
           children: [
-            Icon(icon, size: 14, color: const Color(0xFF4A90A4)),
+            Icon(icon, size: 14, color: const Color(0xFF10B981)),
             const SizedBox(width: 6),
             Text(
               label,
@@ -628,7 +628,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF4A90A4)),
+                borderSide: const BorderSide(color: Color(0xFF10B981)),
               ),
             ),
           )

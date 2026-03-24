@@ -232,7 +232,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _tabController.index == 0 ? _showNewConversationDialog : _showAddContactDialog,
-        backgroundColor: const Color(0xFF4A90A4),
+        backgroundColor: const Color(0xFF10B981),
         child: Icon(
           _tabController.index == 0 ? Icons.chat_bubble_outline : Icons.person_add,
           color: Colors.white,
@@ -268,7 +268,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         IconButton(
           icon: Icon(
             _isSearching ? Icons.close : Icons.search,
-            color: const Color(0xFF4A90A4),
+            color: const Color(0xFF10B981),
           ),
           onPressed: () {
             setState(() {
@@ -280,16 +280,16 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           },
         ),
         IconButton(
-          icon: const Icon(Icons.more_vert, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.more_vert, color: Color(0xFF10B981)),
           onPressed: _showOptionsMenu,
         ),
         const ProfileMenu(),
       ],
       bottom: TabBar(
         controller: _tabController,
-        labelColor: const Color(0xFF4A90A4),
+        labelColor: const Color(0xFF10B981),
         unselectedLabelColor: Colors.grey,
-        indicatorColor: const Color(0xFF4A90A4),
+        indicatorColor: const Color(0xFF10B981),
         indicatorWeight: 3,
         tabs: const [
           Tab(text: 'Conversations'),
@@ -356,7 +356,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+                backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
                 backgroundImage: conversation['profile_picture'] != null
                     ? NetworkImage(conversation['profile_picture'])
                     : null,
@@ -364,7 +364,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                     ? Text(
                         conversation['avatar'],
                         style: const TextStyle(
-                          color: Color(0xFF4A90A4),
+                          color: Color(0xFF10B981),
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -388,7 +388,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                 conversation['time'],
                 style: TextStyle(
                   fontSize: 12,
-                  color: hasUnread ? const Color(0xFF4A90A4) : Colors.grey,
+                  color: hasUnread ? const Color(0xFF10B981) : Colors.grey,
                   fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
@@ -412,7 +412,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                   margin: const EdgeInsets.only(left: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4A90A4),
+                    color: const Color(0xFF10B981),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -474,7 +474,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: CircleAvatar(
           radius: 24,
-          backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+          backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
           backgroundImage: contact['profile_picture'] != null
               ? NetworkImage(contact['profile_picture'])
               : null,
@@ -482,7 +482,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               ? Text(
                   contact['avatar'],
                   style: const TextStyle(
-                    color: Color(0xFF4A90A4),
+                    color: Color(0xFF10B981),
                     fontWeight: FontWeight.bold,
                   ),
                 )
@@ -499,7 +499,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF4A90A4)),
+              icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF10B981)),
               onPressed: () => _startConversationWithContact(contact),
             ),
             IconButton(
@@ -525,10 +525,10 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF4A90A4).withOpacity(0.1),
+              color: const Color(0xFF10B981).withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 40, color: const Color(0xFF4A90A4)),
+            child: Icon(icon, size: 40, color: const Color(0xFF10B981)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -696,11 +696,11 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                   final contact = _contacts[index];
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+                      backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
                       child: Text(
                         contact['avatar'],
                         style: const TextStyle(
-                          color: Color(0xFF4A90A4),
+                          color: Color(0xFF10B981),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -731,7 +731,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.mark_chat_read, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.mark_chat_read, color: Color(0xFF10B981)),
               title: const Text('Tout marquer comme lu'),
               onTap: () {
                 Navigator.pop(context);
@@ -741,14 +741,14 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               },
             ),
             ListTile(
-              leading: const Icon(Icons.archive, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.archive, color: Color(0xFF10B981)),
               title: const Text('Conversations archivées'),
               onTap: () {
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.settings, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.settings, color: Color(0xFF10B981)),
               title: const Text('Paramètres de chat'),
               onTap: () {
                 Navigator.pop(context);
@@ -771,7 +771,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.person, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.person, color: Color(0xFF10B981)),
               title: const Text('Voir le profil'),
               onTap: () => Navigator.pop(context),
             ),
@@ -894,7 +894,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                   icon: const Icon(Icons.person_add),
                   label: const Text('Ajouter'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A90A4),
+                    backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

@@ -236,7 +236,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+                backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
                 backgroundImage: widget.contactProfilePicture != null
                     ? NetworkImage(widget.contactProfilePicture!)
                     : null,
@@ -244,7 +244,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                     ? Text(
                         widget.contactAvatar,
                         style: const TextStyle(
-                          color: Color(0xFF4A90A4),
+                          color: Color(0xFF10B981),
                           fontWeight: FontWeight.bold,
                         ),
                       )
@@ -267,7 +267,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.videocam_outlined, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.videocam_outlined, color: Color(0xFF10B981)),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Appel vidéo bientôt disponible')),
@@ -275,7 +275,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           },
         ),
         IconButton(
-          icon: const Icon(Icons.call_outlined, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.call_outlined, color: Color(0xFF10B981)),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Appel audio bientôt disponible')),
@@ -283,7 +283,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           },
         ),
         IconButton(
-          icon: const Icon(Icons.more_vert, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.more_vert, color: Color(0xFF10B981)),
           onPressed: _showConversationOptions,
         ),
       ],
@@ -318,11 +318,11 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           if (!isMe && showAvatar)
             CircleAvatar(
               radius: 16,
-              backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+              backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
               child: Text(
                 widget.contactAvatar,
                 style: const TextStyle(
-                  color: Color(0xFF4A90A4),
+                  color: Color(0xFF10B981),
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -335,7 +335,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: isMe ? const Color(0xFF4A90A4) : Colors.white,
+                color: isMe ? const Color(0xFF10B981) : Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
@@ -401,11 +401,11 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         children: [
           CircleAvatar(
             radius: 14,
-            backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+            backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
             child: Text(
               widget.contactAvatar,
               style: const TextStyle(
-                color: Color(0xFF4A90A4),
+                color: Color(0xFF10B981),
                 fontWeight: FontWeight.bold,
                 fontSize: 10,
               ),
@@ -467,7 +467,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.add_circle_outline, color: Color(0xFF4A90A4)),
+              icon: const Icon(Icons.add_circle_outline, color: Color(0xFF10B981)),
               onPressed: _showAttachmentOptions,
             ),
             Expanded(
@@ -493,7 +493,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             const SizedBox(width: 8),
             Container(
               decoration: const BoxDecoration(
-                color: Color(0xFF4A90A4),
+                color: Color(0xFF10B981),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
@@ -571,12 +571,12 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.person, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.person, color: Color(0xFF10B981)),
               title: const Text('Voir le profil'),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              leading: const Icon(Icons.search, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.search, color: Color(0xFF10B981)),
               title: const Text('Rechercher dans la conversation'),
               onTap: () => Navigator.pop(context),
             ),

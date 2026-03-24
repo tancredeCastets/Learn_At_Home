@@ -246,7 +246,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildSectionTitle(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, color: const Color(0xFF4A90A4), size: 24),
+        Icon(icon, color: const Color(0xFF10B981), size: 24),
         const SizedBox(width: 8),
         Text(
           title,
@@ -321,7 +321,7 @@ class _DashboardPageState extends State<DashboardPage> {
         width: 4,
         height: 40,
         decoration: BoxDecoration(
-          color: const Color(0xFF4A90A4),
+          color: const Color(0xFF10B981),
           borderRadius: BorderRadius.circular(2),
         ),
       ),
@@ -428,12 +428,12 @@ class _DashboardPageState extends State<DashboardPage> {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: const Color(0xFF4A90A4).withOpacity(0.1),
+          color: const Color(0xFF10B981).withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Icon(
           Icons.event,
-          color: Color(0xFF4A90A4),
+          color: Color(0xFF10B981),
         ),
       ),
       title: Text(

@@ -120,7 +120,7 @@ class _CalendarPageState extends State<CalendarPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddEventDialog,
-        backgroundColor: const Color(0xFF4A90A4),
+        backgroundColor: const Color(0xFF10B981),
         child: const Icon(Icons.add, color: Colors.white),
       ),
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
@@ -141,7 +141,7 @@ class _CalendarPageState extends State<CalendarPage> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.today, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.today, color: Color(0xFF10B981)),
           onPressed: () {
             setState(() {
               _selectedDate = DateTime.now();
@@ -150,7 +150,7 @@ class _CalendarPageState extends State<CalendarPage> {
           },
         ),
         IconButton(
-          icon: const Icon(Icons.sync, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.sync, color: Color(0xFF10B981)),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Synchronisation en cours...')),
@@ -194,7 +194,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: _isMonthView ? FontWeight.bold : FontWeight.normal,
-                    color: _isMonthView ? const Color(0xFF4A90A4) : Colors.grey[600],
+                    color: _isMonthView ? const Color(0xFF10B981) : Colors.grey[600],
                   ),
                 ),
               ),
@@ -223,7 +223,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: !_isMonthView ? FontWeight.bold : FontWeight.normal,
-                    color: !_isMonthView ? const Color(0xFF4A90A4) : Colors.grey[600],
+                    color: !_isMonthView ? const Color(0xFF10B981) : Colors.grey[600],
                   ),
                 ),
               ),
@@ -272,7 +272,7 @@ class _CalendarPageState extends State<CalendarPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
-          icon: const Icon(Icons.chevron_left, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.chevron_left, color: Color(0xFF10B981)),
           onPressed: () {
             setState(() {
               _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1);
@@ -288,7 +288,7 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.chevron_right, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.chevron_right, color: Color(0xFF10B981)),
           onPressed: () {
             setState(() {
               _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1);
@@ -360,9 +360,9 @@ class _CalendarPageState extends State<CalendarPage> {
             margin: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               color: isSelected
-                  ? const Color(0xFF4A90A4)
+                  ? const Color(0xFF10B981)
                   : isToday
-                      ? const Color(0xFF4A90A4).withOpacity(0.1)
+                      ? const Color(0xFF10B981).withOpacity(0.1)
                       : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
             ),
@@ -377,7 +377,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     color: isSelected
                         ? Colors.white
                         : isToday
-                            ? const Color(0xFF4A90A4)
+                            ? const Color(0xFF10B981)
                             : const Color(0xFF2D3748),
                   ),
                 ),
@@ -388,7 +388,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       width: 6,
                       height: 6,
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.white : const Color(0xFF4A90A4),
+                        color: isSelected ? Colors.white : const Color(0xFF10B981),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -438,9 +438,9 @@ class _CalendarPageState extends State<CalendarPage> {
                     margin: const EdgeInsets.symmetric(horizontal: 2),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFF4A90A4)
+                          ? const Color(0xFF10B981)
                           : isToday
-                              ? const Color(0xFF4A90A4).withOpacity(0.1)
+                              ? const Color(0xFF10B981).withOpacity(0.1)
                               : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -462,7 +462,7 @@ class _CalendarPageState extends State<CalendarPage> {
                             color: isSelected
                                 ? Colors.white
                                 : isToday
-                                    ? const Color(0xFF4A90A4)
+                                    ? const Color(0xFF10B981)
                                     : const Color(0xFF2D3748),
                           ),
                         ),
@@ -472,7 +472,7 @@ class _CalendarPageState extends State<CalendarPage> {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.white : const Color(0xFF4A90A4),
+                              color: isSelected ? Colors.white : const Color(0xFF10B981),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -499,7 +499,7 @@ class _CalendarPageState extends State<CalendarPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
-          icon: const Icon(Icons.chevron_left, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.chevron_left, color: Color(0xFF10B981)),
           onPressed: () {
             setState(() {
               _selectedDate = _selectedDate.subtract(const Duration(days: 7));
@@ -515,7 +515,7 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.chevron_right, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.chevron_right, color: Color(0xFF10B981)),
           onPressed: () {
             setState(() {
               _selectedDate = _selectedDate.add(const Duration(days: 7));
@@ -619,7 +619,7 @@ class _CalendarPageState extends State<CalendarPage> {
             width: 4,
             height: 60,
             decoration: BoxDecoration(
-              color: const Color(0xFF4A90A4),
+              color: const Color(0xFF10B981),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -846,7 +846,7 @@ class _CalendarPageState extends State<CalendarPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.edit, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.edit, color: Color(0xFF10B981)),
               title: const Text('Modifier'),
               onTap: () {
                 Navigator.pop(context);
@@ -854,7 +854,7 @@ class _CalendarPageState extends State<CalendarPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.notifications, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.notifications, color: Color(0xFF10B981)),
               title: const Text('Ajouter un rappel'),
               onTap: () {
                 Navigator.pop(context);

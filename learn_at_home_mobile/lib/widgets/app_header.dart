@@ -104,11 +104,25 @@ class _AppHeaderState extends State<AppHeader> {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(
-        widget.title,
-        style: const TextStyle(fontWeight: FontWeight.bold),
+      title: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              'assets/images/logo.png',
+              width: 36,
+              height: 36,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            widget.title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
-      backgroundColor: const Color(0xFF4A90A4),
+      backgroundColor: const Color(0xFF10B981),
       foregroundColor: Colors.white,
       elevation: 0,
       automaticallyImplyLeading: false,
@@ -133,7 +147,7 @@ class _AppHeaderState extends State<AppHeader> {
                       ? Text(
                           _userInitials,
                           style: const TextStyle(
-                            color: Color(0xFF4A90A4),
+                            color: Color(0xFF10B981),
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -173,7 +187,7 @@ class _AppHeaderState extends State<AppHeader> {
               value: 'profile',
               child: Row(
                 children: const [
-                  Icon(Icons.person_outline, color: Color(0xFF4A90A4), size: 20),
+                  Icon(Icons.person_outline, color: Color(0xFF10B981), size: 20),
                   SizedBox(width: 8),
                   Text('Mon profil'),
                 ],

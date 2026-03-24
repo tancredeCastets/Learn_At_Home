@@ -171,7 +171,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               : const Text(
                   'Vous n\'avez pas reçu l\'email ? Renvoyer',
                   style: TextStyle(
-                    color: Color(0xFF4A90A4),
+                    color: Color(0xFF10B981),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -224,13 +224,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           width: 70,
           height: 70,
           decoration: BoxDecoration(
-            color: const Color(0xFF4A90A4).withOpacity(0.1),
+            color: const Color(0xFF10B981).withOpacity(0.1),
             borderRadius: BorderRadius.circular(16),
           ),
           child: const Icon(
             Icons.lock_reset,
             size: 35,
-            color: Color(0xFF4A90A4),
+            color: Color(0xFF10B981),
           ),
         ),
         const SizedBox(height: 24),
@@ -275,7 +275,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(
               hintText: 'Entrez votre email',
-              prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF4A90A4)),
+              prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF10B981)),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -329,7 +329,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           child: const Text(
             'Connexion',
             style: TextStyle(
-              color: Color(0xFF4A90A4),
+              color: Color(0xFF10B981),
               fontWeight: FontWeight.w600,
             ),
           ),

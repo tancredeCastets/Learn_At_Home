@@ -220,7 +220,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTaskDialog,
-        backgroundColor: const Color(0xFF4A90A4),
+        backgroundColor: const Color(0xFF10B981),
         child: const Icon(Icons.add, color: Colors.white),
       ),
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
@@ -241,7 +241,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.filter_list, color: Color(0xFF4A90A4)),
+          icon: const Icon(Icons.filter_list, color: Color(0xFF10B981)),
           onPressed: _showFilterOptions,
         ),
       ],
@@ -254,12 +254,12 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: _currentRole == TaskRole.tuteur
-            ? const Color(0xFF4A90A4).withOpacity(0.1)
+            ? const Color(0xFF10B981).withOpacity(0.1)
             : const Color(0xFF9C27B0).withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _currentRole == TaskRole.tuteur
-              ? const Color(0xFF4A90A4)
+              ? const Color(0xFF10B981)
               : const Color(0xFF9C27B0),
           width: 1,
         ),
@@ -271,7 +271,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                 ? Icons.volunteer_activism
                 : Icons.school,
             color: _currentRole == TaskRole.tuteur
-                ? const Color(0xFF4A90A4)
+                ? const Color(0xFF10B981)
                 : const Color(0xFF9C27B0),
           ),
           const SizedBox(width: 12),
@@ -286,7 +286,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: _currentRole == TaskRole.tuteur
-                        ? const Color(0xFF4A90A4)
+                        ? const Color(0xFF10B981)
                         : const Color(0xFF9C27B0),
                   ),
                 ),
@@ -306,7 +306,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF4A90A4),
+                color: const Color(0xFF10B981),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -344,7 +344,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
           ],
         ),
         indicatorPadding: const EdgeInsets.all(4),
-        labelColor: const Color(0xFF4A90A4),
+        labelColor: const Color(0xFF10B981),
         unselectedLabelColor: Colors.grey[600],
         labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 13),
@@ -389,7 +389,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF4A90A4),
+        color: const Color(0xFF10B981),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
@@ -541,7 +541,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                       width: 4,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF4A90A4),
+                        color: const Color(0xFF10B981),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -765,7 +765,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              leading: const Icon(Icons.clear_all, color: Color(0xFF4A90A4)),
+              leading: const Icon(Icons.clear_all, color: Color(0xFF10B981)),
               title: const Text('Effacer les filtres'),
               onTap: () => Navigator.pop(context),
             ),
@@ -876,7 +876,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: const Color(0xFF4A90A4)),
+          Icon(icon, size: 20, color: const Color(0xFF10B981)),
           const SizedBox(width: 12),
           Text(
             '$label: ',
@@ -977,7 +977,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                 const SizedBox(height: 16),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.calendar_today, color: Color(0xFF4A90A4)),
+                  leading: const Icon(Icons.calendar_today, color: Color(0xFF10B981)),
                   title: const Text('Date d\'échéance'),
                   subtitle: Text(_formatFullDate(selectedDate)),
                   onTap: () async {
@@ -1158,7 +1158,7 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
                 const SizedBox(height: 16),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.calendar_today, color: Color(0xFF4A90A4)),
+                  leading: const Icon(Icons.calendar_today, color: Color(0xFF10B981)),
                   title: const Text('Date d\'échéance'),
                   subtitle: Text(_formatFullDate(selectedDate)),
                   onTap: () async {

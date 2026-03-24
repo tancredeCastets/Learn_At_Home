@@ -99,13 +99,13 @@ class _ProfileMenuState extends State<ProfileMenu> {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor: const Color(0xFF4A90A4).withOpacity(0.2),
+              backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
               backgroundImage: _profilePicture != null ? NetworkImage(_profilePicture!) : null,
               child: _profilePicture == null
                   ? Text(
                       _userInitials,
                       style: const TextStyle(
-                        color: Color(0xFF4A90A4),
+                        color: Color(0xFF10B981),
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -113,7 +113,7 @@ class _ProfileMenuState extends State<ProfileMenu> {
                   : null,
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.arrow_drop_down, color: Color(0xFF4A90A4)),
+            const Icon(Icons.arrow_drop_down, color: Color(0xFF10B981)),
           ],
         ),
       ),
@@ -145,7 +145,7 @@ class _ProfileMenuState extends State<ProfileMenu> {
           value: 'profile',
           child: Row(
             children: const [
-              Icon(Icons.person_outline, color: Color(0xFF4A90A4), size: 20),
+              Icon(Icons.person_outline, color: Color(0xFF10B981), size: 20),
               SizedBox(width: 8),
               Text('Mon profil'),
             ],
