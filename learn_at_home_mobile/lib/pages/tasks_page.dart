@@ -195,13 +195,6 @@ class _TasksPageState extends State<TasksPage> with SingleTickerProviderStateMix
       backgroundColor: Colors.grey[50],
       appBar: AppHeader(
         title: 'Gestion des Tâches',
-        onRefresh: _loadTasks,
-        extraActions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list, color: Colors.white),
-            onPressed: _showFilterOptions,
-          ),
-        ],
       ),
       body: Column(
         children: [

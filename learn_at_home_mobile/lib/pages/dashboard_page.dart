@@ -128,12 +128,6 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppHeader(
         title: 'Tableau de bord',
-        onRefresh: () {
-          _loadDashboardData();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Données actualisées')),
-          );
-        },
       ),
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator())
