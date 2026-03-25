@@ -94,7 +94,6 @@ class _CalendarPageState extends State<CalendarPage> {
       backgroundColor: Colors.grey[50],
       appBar: AppHeader(
         title: 'Calendrier',
-        onRefresh: _loadEvents,
         extraActions: [
           IconButton(
             icon: const Icon(Icons.today, color: Colors.white),
